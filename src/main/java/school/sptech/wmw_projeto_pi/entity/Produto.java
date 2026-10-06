@@ -1,4 +1,4 @@
-package school.sptech.wmw_projeto_pi;
+package school.sptech.wmw_projeto_pi.entity;
 
 public class Produto {
     private Integer id;
