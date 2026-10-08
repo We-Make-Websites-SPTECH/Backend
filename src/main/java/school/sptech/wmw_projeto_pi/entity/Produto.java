@@ -1,50 +1,45 @@
 package school.sptech.wmw_projeto_pi.entity;
 
+import jakarta.persistence.*;
+import school.sptech.wmw_projeto_pi.enums.TamanhoEnum;
+
+import java.time.LocalDate;
+
+@Entity
 public class Produto {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private String nome;
-    private Integer quantidade;
-    private Double preco;
-
-    public Produto(Integer id, String nome, Integer quantidade, Double preco) {
-        this.id = id;
-        this.nome = nome;
-        this.quantidade = quantidade;
-        this.preco = preco;
-    }
+    private Boolean ativo;
+    private TamanhoEnum tamanho;
+    private LocalDate createdAt;
+    @ManyToOne
+    private Usuario createdBy;
+    private LocalDate updatedAt;
+    @ManyToOne
+    private Usuario updatedBy;
 
     public Produto() {
     }
 
-    public Integer getId() {
-        return id;
+
+
+    public Usuario getUpdatedBy() {
+        return updatedBy;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    public void setUpdatedBy(Usuario updatedBy) {
+        this.updatedBy = updatedBy;
     }
 
-    public String getNome() {
-        return nome;
+    public Usuario getCreatedBy() {
+        return createdBy;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
+    public void setCreatedBy(Usuario createdBy) {
+        this.createdBy = createdBy;
     }
 
-    public Integer getQuantidade() {
-        return quantidade;
-    }
-
-    public void setQuantidade(Integer quantidade) {
-        this.quantidade = quantidade;
-    }
-
-    public Double getPreco() {
-        return preco;
-    }
-
-    public void setPreco(Double preco) {
-        this.preco = preco;
-    }
 }
