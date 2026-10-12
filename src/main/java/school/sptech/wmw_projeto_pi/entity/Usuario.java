@@ -12,6 +12,7 @@ public class Usuario {
     private Integer Id;
     //private Cargo cargo;
     private String nome;
+    private String email;
     private String senha;
     private Boolean ativo;
     // private Usuario createdBy;

@@ -5,4 +5,5 @@ import school.sptech.wmw_projeto_pi.entity.Produto;
 import school.sptech.wmw_projeto_pi.entity.Usuario;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
+    Boolean existsByEmail (String email);
 }
