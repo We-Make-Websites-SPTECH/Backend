@@ -10,11 +10,11 @@ public class UsuarioCadastroDTO {
     private String nome;
     @Email
     @NotBlank
-    @Size(min=3, max=256)
+    @Size(min=3, max=255)
     private String email;
     @NotBlank
-    @Size(min=8)
-    @Pattern(regexp = ".*[!@#$%&*+=-_?;:].*", message = "A senha deve conter caracteres especiais.")
+    @Size(min=8, max=64)
+    @Pattern(regexp = ".*[-!@#$%&*+=_?;:].*", message = "A senha deve conter caracteres especiais.")
     private String senha;
 
     public String getNome() {

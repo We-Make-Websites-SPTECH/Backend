@@ -3,7 +3,6 @@ package school.sptech.wmw_projeto_pi.dto;
 import jakarta.persistence.Entity;
 import jakarta.validation.constraints.*;
 
-@Entity
 public class UsuarioLoginDTO {
     @Email
     @NotBlank
