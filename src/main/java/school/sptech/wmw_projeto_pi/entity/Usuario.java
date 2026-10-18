@@ -31,6 +31,14 @@ public class Usuario {
         this.ativo = ativo;
     }
 
+    public Usuario(Integer id, String nome, String email, String senha, Boolean ativo) {
+        Id = id;
+        this.nome = nome;
+        this.email = email;
+        this.senha = senha;
+        this.ativo = true;
+    }
+
     public Integer getId() {
         return Id;
     }
@@ -45,6 +53,14 @@ public class Usuario {
 
     public void setNome(String nome) {
         this.nome = nome;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getSenha() {
