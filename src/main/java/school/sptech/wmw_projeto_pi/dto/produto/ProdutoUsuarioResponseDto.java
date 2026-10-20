@@ -1,13 +1,13 @@
-package school.sptech.wmw_projeto_pi.dto;
+package school.sptech.wmw_projeto_pi.dto.produto;
 
-public class UsuarioResponseDto {
+public class ProdutoUsuarioResponseDto {
     private Integer Id;
     private String nome;
 
-    public UsuarioResponseDto() {
+    public ProdutoUsuarioResponseDto() {
     }
 
-    public UsuarioResponseDto(Integer id, String nome) {
+    public ProdutoUsuarioResponseDto(Integer id, String nome) {
         Id = id;
         this.nome = nome;
     }

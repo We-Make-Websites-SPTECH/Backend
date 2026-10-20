@@ -1,14 +1,19 @@
-package school.sptech.wmw_projeto_pi.dto;
+package school.sptech.wmw_projeto_pi.dto.produto;
 
-import jakarta.persistence.ManyToOne;
-import school.sptech.wmw_projeto_pi.entity.Usuario;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import school.sptech.wmw_projeto_pi.enums.TamanhoEnum;
 
-import java.time.LocalDateTime;
-
 public class ProdutoRequestDtoUpdate {
+
+    @NotBlank
     private String nome;
+
+    @NotBlank
     private Boolean ativo;
+
+    @NotBlank
+    @NotNull
     private TamanhoEnum tamanho;
 
     public ProdutoRequestDtoUpdate() {

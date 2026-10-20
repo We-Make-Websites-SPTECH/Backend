@@ -1,8 +1,8 @@
 package school.sptech.wmw_projeto_pi.mapper;
 
-import school.sptech.wmw_projeto_pi.dto.ProdutoRequestDtoCreate;
-import school.sptech.wmw_projeto_pi.dto.ProdutoRequestDtoUpdate;
-import school.sptech.wmw_projeto_pi.dto.ProdutoResponseDtoGetAll;
+import school.sptech.wmw_projeto_pi.dto.produto.ProdutoRequestDtoCreate;
+import school.sptech.wmw_projeto_pi.dto.produto.ProdutoRequestDtoUpdate;
+import school.sptech.wmw_projeto_pi.dto.produto.ProdutoResponseDtoGetAll;
 import school.sptech.wmw_projeto_pi.entity.Produto;
 
 import java.util.ArrayList;

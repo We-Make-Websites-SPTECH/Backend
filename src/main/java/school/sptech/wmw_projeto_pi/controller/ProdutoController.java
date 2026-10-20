@@ -3,9 +3,9 @@ package school.sptech.wmw_projeto_pi.controller;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import school.sptech.wmw_projeto_pi.dto.ProdutoRequestDtoCreate;
-import school.sptech.wmw_projeto_pi.dto.ProdutoRequestDtoUpdate;
-import school.sptech.wmw_projeto_pi.dto.ProdutoResponseDtoGetAll;
+import school.sptech.wmw_projeto_pi.dto.produto.ProdutoRequestDtoCreate;
+import school.sptech.wmw_projeto_pi.dto.produto.ProdutoRequestDtoUpdate;
+import school.sptech.wmw_projeto_pi.dto.produto.ProdutoResponseDtoGetAll;
 import school.sptech.wmw_projeto_pi.entity.Produto;
 import school.sptech.wmw_projeto_pi.mapper.ProdutoMapper;
 import school.sptech.wmw_projeto_pi.repository.ProdutoRepository;
@@ -53,8 +53,5 @@ public class ProdutoController {
         Produto produtoAtualizado = produtoService.update(id, produto, idUsuario);
         return ResponseEntity.status(200).body(ProdutoMapper.toResponseDto(produtoAtualizado));
     }
-
-
-
 
 }

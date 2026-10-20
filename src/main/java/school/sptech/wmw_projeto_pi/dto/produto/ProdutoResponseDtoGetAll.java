@@ -1,8 +1,6 @@
-package school.sptech.wmw_projeto_pi.dto;
+package school.sptech.wmw_projeto_pi.dto.produto;
 
-import school.sptech.wmw_projeto_pi.entity.Usuario;
 import school.sptech.wmw_projeto_pi.enums.TamanhoEnum;
-import school.sptech.wmw_projeto_pi.dto.UsuarioResponseDto;
 
 
 import java.time.LocalDateTime;
@@ -13,14 +11,14 @@ public class ProdutoResponseDtoGetAll {
     private Boolean ativo;
     private TamanhoEnum tamanho;
     private LocalDateTime createdAt;
-    private UsuarioResponseDto createdBy;
+    private ProdutoUsuarioResponseDto createdBy;
     private LocalDateTime updatedAt;
-    private UsuarioResponseDto updatedBy;
+    private ProdutoUsuarioResponseDto updatedBy;
 
     public ProdutoResponseDtoGetAll() {
     }
 
-    public ProdutoResponseDtoGetAll(Integer id, String nome, Boolean ativo, TamanhoEnum tamanho, LocalDateTime createdAt, UsuarioResponseDto createdBy, LocalDateTime updatedAt, UsuarioResponseDto updatedBy) {
+    public ProdutoResponseDtoGetAll(Integer id, String nome, Boolean ativo, TamanhoEnum tamanho, LocalDateTime createdAt, ProdutoUsuarioResponseDto createdBy, LocalDateTime updatedAt, ProdutoUsuarioResponseDto updatedBy) {
         this.id = id;
         this.nome = nome;
         this.ativo = ativo;
@@ -71,11 +69,11 @@ public class ProdutoResponseDtoGetAll {
         this.createdAt = createdAt;
     }
 
-    public UsuarioResponseDto getCreatedBy() {
+    public ProdutoUsuarioResponseDto getCreatedBy() {
         return createdBy;
     }
 
-    public void setCreatedBy(UsuarioResponseDto createdBy) {
+    public void setCreatedBy(ProdutoUsuarioResponseDto createdBy) {
         this.createdBy = createdBy;
     }
 
@@ -87,11 +85,11 @@ public class ProdutoResponseDtoGetAll {
         this.updatedAt = updatedAt;
     }
 
-    public UsuarioResponseDto getUpdatedBy() {
+    public ProdutoUsuarioResponseDto getUpdatedBy() {
         return updatedBy;
     }
 
-    public void setUpdatedBy(UsuarioResponseDto updatedBy) {
+    public void setUpdatedBy(ProdutoUsuarioResponseDto updatedBy) {
         this.updatedBy = updatedBy;
     }
 }
