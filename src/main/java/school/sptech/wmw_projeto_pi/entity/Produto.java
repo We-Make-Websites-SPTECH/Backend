@@ -14,6 +14,8 @@ public class Produto {
     private Integer id;
     private String nome;
     private Boolean ativo;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private TamanhoEnum tamanho;
     private LocalDateTime createdAt;
     @ManyToOne
