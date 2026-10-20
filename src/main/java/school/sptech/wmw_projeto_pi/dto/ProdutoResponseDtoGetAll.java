@@ -1,25 +1,26 @@
 package school.sptech.wmw_projeto_pi.dto;
 
-import jakarta.persistence.ManyToOne;
 import school.sptech.wmw_projeto_pi.entity.Usuario;
 import school.sptech.wmw_projeto_pi.enums.TamanhoEnum;
+import school.sptech.wmw_projeto_pi.dto.UsuarioResponseDto;
 
-import java.time.LocalDate;
 
-public class ProdutoResponseDto {
+import java.time.LocalDateTime;
+
+public class ProdutoResponseDtoGetAll {
     private Integer id;
     private String nome;
     private Boolean ativo;
     private TamanhoEnum tamanho;
-    private LocalDate createdAt;
-    private Usuario createdBy;
-    private LocalDate updatedAt;
-    private Usuario updatedBy;
+    private LocalDateTime createdAt;
+    private UsuarioResponseDto createdBy;
+    private LocalDateTime updatedAt;
+    private UsuarioResponseDto updatedBy;
 
-    public ProdutoResponseDto() {
+    public ProdutoResponseDtoGetAll() {
     }
 
-    public ProdutoResponseDto(Integer id, String nome, Boolean ativo, TamanhoEnum tamanho, LocalDate createdAt, Usuario createdBy, LocalDate updatedAt, Usuario updatedBy) {
+    public ProdutoResponseDtoGetAll(Integer id, String nome, Boolean ativo, TamanhoEnum tamanho, LocalDateTime createdAt, UsuarioResponseDto createdBy, LocalDateTime updatedAt, UsuarioResponseDto updatedBy) {
         this.id = id;
         this.nome = nome;
         this.ativo = ativo;
@@ -62,35 +63,35 @@ public class ProdutoResponseDto {
         this.tamanho = tamanho;
     }
 
-    public LocalDate getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDate createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
-    public Usuario getCreatedBy() {
+    public UsuarioResponseDto getCreatedBy() {
         return createdBy;
     }
 
-    public void setCreatedBy(Usuario createdBy) {
+    public void setCreatedBy(UsuarioResponseDto createdBy) {
         this.createdBy = createdBy;
     }
 
-    public LocalDate getUpdatedAt() {
+    public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(LocalDate updatedAt) {
+    public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
 
-    public Usuario getUpdatedBy() {
+    public UsuarioResponseDto getUpdatedBy() {
         return updatedBy;
     }
 
-    public void setUpdatedBy(Usuario updatedBy) {
+    public void setUpdatedBy(UsuarioResponseDto updatedBy) {
         this.updatedBy = updatedBy;
     }
 }
