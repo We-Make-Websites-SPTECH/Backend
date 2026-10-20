@@ -9,10 +9,9 @@ public class ProdutoRequestDtoUpdate {
     @NotBlank
     private String nome;
 
-    @NotBlank
+    @NotNull
     private Boolean ativo;
 
-    @NotBlank
     @NotNull
     private TamanhoEnum tamanho;
 
