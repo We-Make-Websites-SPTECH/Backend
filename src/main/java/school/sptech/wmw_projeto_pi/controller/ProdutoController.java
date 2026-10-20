@@ -8,7 +8,6 @@ import school.sptech.wmw_projeto_pi.dto.produto.ProdutoRequestDtoUpdate;
 import school.sptech.wmw_projeto_pi.dto.produto.ProdutoResponseDtoGetAll;
 import school.sptech.wmw_projeto_pi.entity.Produto;
 import school.sptech.wmw_projeto_pi.mapper.ProdutoMapper;
-import school.sptech.wmw_projeto_pi.repository.ProdutoRepository;
 import school.sptech.wmw_projeto_pi.service.ProdutoService;
 
 import java.util.List;
@@ -17,12 +16,10 @@ import java.util.List;
 @RequestMapping("/produto")
 
 public class ProdutoController {
-    private final ProdutoRepository produtoRepository;
     private final ProdutoService produtoService;
 
 
-    public ProdutoController(ProdutoRepository produtoRepository, ProdutoService produtoService) {
-        this.produtoRepository = produtoRepository;
+    public ProdutoController(ProdutoService produtoService) {
         this.produtoService = produtoService;
     }
 
