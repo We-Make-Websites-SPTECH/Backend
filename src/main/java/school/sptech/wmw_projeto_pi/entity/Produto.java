@@ -17,9 +17,11 @@ public class Produto {
     private TamanhoEnum tamanho;
     private LocalDateTime createdAt;
     @ManyToOne
+    @JoinColumn(name = "created_by")
     private Usuario createdBy;
     private LocalDateTime updatedAt;
     @ManyToOne
+    @JoinColumn(name = "updated_by")
     private Usuario updatedBy;
 
     @PrePersist
