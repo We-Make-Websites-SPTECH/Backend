@@ -7,8 +7,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import school.sptech.wmw_projeto_pi.dto.UsuarioCadastroDTO;
-import school.sptech.wmw_projeto_pi.dto.UsuarioResponseDTO;
+import school.sptech.wmw_projeto_pi.dto.usuario.UsuarioCadastroDTO;
+import school.sptech.wmw_projeto_pi.dto.usuario.UsuarioLoginDTO;
+import school.sptech.wmw_projeto_pi.dto.usuario.UsuarioResponseDTO;
 import school.sptech.wmw_projeto_pi.service.AuthService;
 
 @RestController
@@ -26,5 +27,10 @@ public class AuthController {
         UsuarioResponseDTO resposta = authService.cadastrar(dto);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(resposta);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<UsuarioResponseDTO> login(@Valid @RequestBody UsuarioLoginDTO dto) {
+        return ResponseEntity.ok(authService.login(dto));
     }
 }
