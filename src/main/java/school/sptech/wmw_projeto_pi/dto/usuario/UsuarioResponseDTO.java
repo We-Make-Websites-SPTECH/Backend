@@ -1,4 +1,4 @@
-package school.sptech.wmw_projeto_pi.dto;
+package school.sptech.wmw_projeto_pi.dto.usuario;
 
 import school.sptech.wmw_projeto_pi.entity.Usuario;
 
