@@ -36,7 +36,7 @@ public class Usuario {
         this.nome = nome;
         this.email = email;
         this.senha = senha;
-        this.ativo = true;
+        this.ativo = ativo;
     }
 
     public Integer getId() {
