@@ -1,16 +1,14 @@
 package school.sptech.wmw_projeto_pi.dto.produtoInsumo;
 
-import school.sptech.wmw_projeto_pi.enums.TamanhoEnum;
-
 public class ProdutoResumoResponseDto {
     private Integer id;
     private String nome;
-    private TamanhoEnum tamanho;
+    private Integer tamanho;
 
     public ProdutoResumoResponseDto() {
     }
 
-    public ProdutoResumoResponseDto(Integer id, String nome, TamanhoEnum tamanho) {
+    public ProdutoResumoResponseDto(Integer id, String nome, Integer tamanho) {
         this.id = id;
         this.nome = nome;
         this.tamanho = tamanho;
@@ -32,11 +30,11 @@ public class ProdutoResumoResponseDto {
         this.nome = nome;
     }
 
-    public TamanhoEnum getTamanho() {
+    public Integer getTamanho() {
         return tamanho;
     }
 
-    public void setTamanho(TamanhoEnum tamanho) {
+    public void setTamanho(Integer tamanho) {
         this.tamanho = tamanho;
     }
 }

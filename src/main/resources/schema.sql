@@ -91,7 +91,7 @@ CREATE TABLE produto (
                          id INT AUTO_INCREMENT,
                          nome VARCHAR(255) NOT NULL,
                          ativo BOOLEAN NOT NULL DEFAULT TRUE,
-                         tamanho VARCHAR(32) NOT NULL CHECK (tamanho IN ('BROTO', 'GRANDE', 'TREM')),
+                         tamanho INT NOT NULL,
                          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                          created_by INT NOT NULL,
                          updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

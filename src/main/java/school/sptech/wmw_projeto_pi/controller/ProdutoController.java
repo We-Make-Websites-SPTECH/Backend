@@ -9,11 +9,13 @@ import school.sptech.wmw_projeto_pi.dto.produto.ProdutoResponseDtoGetAll;
 import school.sptech.wmw_projeto_pi.entity.Produto;
 import school.sptech.wmw_projeto_pi.mapper.ProdutoMapper;
 import school.sptech.wmw_projeto_pi.service.ProdutoService;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/produto")
+@CrossOrigin(origins = "http://localhost:5173")
 
 public class ProdutoController {
     private final ProdutoService produtoService;
