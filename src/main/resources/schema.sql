@@ -1,4 +1,3 @@
-```
 -- WMW | schema.sql para MySQL
 -- updated_at: valor inicial preenchido no banco; atualizações posteriores
 -- devem ser feitas pelo backend (ex.: @PreUpdate).
@@ -72,7 +71,7 @@ CREATE TABLE permissao_cargo (
 CREATE TABLE insumo (
                         id INT AUTO_INCREMENT,
                         nome VARCHAR(100) NOT NULL,
-                        unidade_medida VARCHAR(32) NOT NULL CHECK (unidade_medida IN ('GRAMA','ML','UNIDADE')),
+                        unidade_medida VARCHAR(32) NOT NULL CHECK (unidade_medida IN ('GRAMA','UNIDADE')),
                         quantidade_atual DECIMAL(12,3) NOT NULL DEFAULT 0,
                         ativo BOOLEAN NOT NULL DEFAULT TRUE,
                         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -288,4 +287,3 @@ CREATE INDEX idx_mov_usuario_data ON movimentacao_estoque (usuario_id, data_hora
 CREATE INDEX idx_mov_item_venda_insumo ON movimentacao_estoque (item_venda_insumo_id);
 CREATE INDEX idx_usuario_cargo_cargo ON usuario_cargo (cargo_id);
 CREATE INDEX idx_alerta_insumo ON alerta_estoque_baixo (insumo_id);
-```

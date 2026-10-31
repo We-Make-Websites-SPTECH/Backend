@@ -3,10 +3,7 @@ package school.sptech.wmw_projeto_pi.controller;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import school.sptech.wmw_projeto_pi.dto.usuario.UsuarioCadastroDTO;
 import school.sptech.wmw_projeto_pi.dto.usuario.UsuarioLoginDTO;
 import school.sptech.wmw_projeto_pi.dto.usuario.UsuarioResponseDTO;
@@ -14,6 +11,7 @@ import school.sptech.wmw_projeto_pi.service.AuthService;
 
 @RestController
 @RequestMapping("/auth")
+@CrossOrigin(origins = "http://localhost:5173")
 public class AuthController {
 
     private final AuthService authService;
