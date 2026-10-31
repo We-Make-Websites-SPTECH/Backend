@@ -1,3 +1,4 @@
+-- WMW | schema.sql para MySQL
 -- updated_at: valor inicial preenchido no banco; atualizações posteriores
 -- devem ser feitas pelo backend (ex.: @PreUpdate).
 
@@ -5,12 +6,12 @@
 -- 1. CARGO
 -- ---------------------------------------------------------------------
 CREATE TABLE cargo (
-    id INT AUTO_INCREMENT,
-    nome VARCHAR(45) NOT NULL,
-    descricao VARCHAR(255) NULL,
-    PRIMARY KEY (id),
-    CONSTRAINT uq_cargo_nome UNIQUE (nome)
-)
+                       id INT AUTO_INCREMENT,
+                       nome VARCHAR(45) NOT NULL,
+                       descricao VARCHAR(255) NULL,
+                       PRIMARY KEY (id),
+                       CONSTRAINT uq_cargo_nome UNIQUE (nome)
+);
 
 -- ---------------------------------------------------------------------
 -- 2. PERMISSAO
@@ -23,7 +24,7 @@ CREATE TABLE permissao (
                            descricao VARCHAR(255) NOT NULL,
                            PRIMARY KEY (id),
                            CONSTRAINT uq_permissao_codigo UNIQUE (codigo)
-) 
+);
 
 -- ---------------------------------------------------------------------
 -- 3. USUARIO
@@ -46,7 +47,7 @@ CREATE TABLE usuario (
                          CONSTRAINT uq_usuario_email UNIQUE (email),
                          CONSTRAINT fk_usuario_created_by FOREIGN KEY (created_by) REFERENCES usuario (id),
                          CONSTRAINT fk_usuario_updated_by FOREIGN KEY (updated_by) REFERENCES usuario (id)
-) 
+);
 
 -- ---------------------------------------------------------------------
 -- 4. PERMISSAO_CARGO
@@ -62,7 +63,7 @@ CREATE TABLE permissao_cargo (
                                  CONSTRAINT fk_permissao_cargo_permissao FOREIGN KEY (permissao_id) REFERENCES permissao (id),
                                  CONSTRAINT fk_permissao_cargo_cargo FOREIGN KEY (cargo_id) REFERENCES cargo (id),
                                  CONSTRAINT fk_permissao_cargo_criado FOREIGN KEY (created_by) REFERENCES usuario (id)
-) 
+);
 
 -- ---------------------------------------------------------------------
 -- 5. INSUMO
@@ -70,7 +71,7 @@ CREATE TABLE permissao_cargo (
 CREATE TABLE insumo (
                         id INT AUTO_INCREMENT,
                         nome VARCHAR(100) NOT NULL,
-                        unidade_medida VARCHAR(32) NOT NULL CHECK (unidade_medida IN ('GRAMA','ML','UNIDADE')),
+                        unidade_medida VARCHAR(32) NOT NULL CHECK (unidade_medida IN ('GRAMA','UNIDADE')),
                         quantidade_atual DECIMAL(12,3) NOT NULL DEFAULT 0,
                         ativo BOOLEAN NOT NULL DEFAULT TRUE,
                         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -81,7 +82,7 @@ CREATE TABLE insumo (
                         CONSTRAINT uq_insumo_nome UNIQUE (nome),
                         CONSTRAINT fk_insumo_created_by FOREIGN KEY (created_by) REFERENCES usuario (id),
                         CONSTRAINT fk_insumo_updated_by FOREIGN KEY (updated_by) REFERENCES usuario (id)
-) 
+);
 
 -- ---------------------------------------------------------------------
 -- 6. PRODUTO
@@ -90,7 +91,7 @@ CREATE TABLE produto (
                          id INT AUTO_INCREMENT,
                          nome VARCHAR(255) NOT NULL,
                          ativo BOOLEAN NOT NULL DEFAULT TRUE,
-                         tamanho VARCHAR(32) NOT NULL CHECK (tamanho IN ('BROTO', 'GRANDE', 'TREM')),
+                         tamanho INT NOT NULL,
                          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                          created_by INT NOT NULL,
                          updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -99,7 +100,7 @@ CREATE TABLE produto (
                          CONSTRAINT uq_produto_nome_tamanho UNIQUE (nome, tamanho),
                          CONSTRAINT fk_produto_created_by FOREIGN KEY (created_by) REFERENCES usuario (id),
                          CONSTRAINT fk_produto_updated_by FOREIGN KEY (updated_by) REFERENCES usuario (id)
-) 
+);
 
 -- ---------------------------------------------------------------------
 -- 7. PRODUTO_INSUMO (receita padrão)
@@ -123,7 +124,7 @@ CREATE TABLE produto_insumo (
                                 CONSTRAINT fk_produto_insumo_insumo FOREIGN KEY (insumo_id) REFERENCES insumo (id),
                                 CONSTRAINT fk_produto_insumo_created_by FOREIGN KEY (created_by) REFERENCES usuario (id),
                                 CONSTRAINT fk_produto_insumo_updated_by FOREIGN KEY (updated_by) REFERENCES usuario (id)
-) 
+);
 
 -- ---------------------------------------------------------------------
 -- 8. PRODUTO_INSUMO_HISTORICO (log de eventos, append-only)
@@ -144,7 +145,7 @@ CREATE TABLE produto_insumo_historico (
                                           CONSTRAINT fk_pih_produto FOREIGN KEY (produto_id) REFERENCES produto (id),
                                           CONSTRAINT fk_pih_insumo FOREIGN KEY (insumo_id) REFERENCES insumo (id),
                                           CONSTRAINT fk_pih_usuario FOREIGN KEY (usuario_id) REFERENCES usuario (id)
-) 
+);
 
 -- ---------------------------------------------------------------------
 -- 9. VENDA
@@ -161,7 +162,7 @@ CREATE TABLE venda (
                        PRIMARY KEY (id),
                        CONSTRAINT fk_venda_created_by FOREIGN KEY (created_by) REFERENCES usuario (id),
                        CONSTRAINT fk_venda_updated_by FOREIGN KEY (updated_by) REFERENCES usuario (id)
-) 
+);
 
 -- ---------------------------------------------------------------------
 -- 10. ITEM_VENDA
@@ -175,7 +176,7 @@ CREATE TABLE item_venda (
                             CONSTRAINT chk_item_venda_qtd CHECK (quantidade > 0),
                             CONSTRAINT fk_item_venda_venda FOREIGN KEY (venda_id) REFERENCES venda (id),
                             CONSTRAINT fk_item_venda_produto FOREIGN KEY (produto_id) REFERENCES produto (id)
-) 
+);
 
 -- ---------------------------------------------------------------------
 -- 11. ITEM_VENDA_INSUMO
@@ -201,7 +202,7 @@ CREATE TABLE item_venda_insumo (
                                    CONSTRAINT fk_ivi_insumo FOREIGN KEY (insumo_id) REFERENCES insumo (id),
                                    CONSTRAINT fk_ivi_created_by FOREIGN KEY (created_by) REFERENCES usuario (id),
                                    CONSTRAINT fk_ivi_updated_by FOREIGN KEY (updated_by) REFERENCES usuario (id)
-) 
+);
 
 -- ---------------------------------------------------------------------
 -- 12. MOVIMENTACAO_ESTOQUE (ledger append-only: entrada, saída, qualquer motivo)
@@ -226,7 +227,7 @@ CREATE TABLE movimentacao_estoque (
                                       CONSTRAINT fk_mov_insumo FOREIGN KEY (insumo_id) REFERENCES insumo (id),
                                       CONSTRAINT fk_mov_item_venda_insumo FOREIGN KEY (item_venda_insumo_id) REFERENCES item_venda_insumo (id),
                                       CONSTRAINT fk_mov_usuario FOREIGN KEY (usuario_id) REFERENCES usuario (id)
-) 
+);
 
 -- ---------------------------------------------------------------------
 -- 13. USUARIO_CARGO (novo na v03)
@@ -246,7 +247,7 @@ CREATE TABLE usuario_cargo (
                                CONSTRAINT fk_usuario_cargo_usuario FOREIGN KEY (usuario_id) REFERENCES usuario (id),
                                CONSTRAINT fk_usuario_cargo_cargo FOREIGN KEY (cargo_id) REFERENCES cargo (id),
                                CONSTRAINT fk_usuario_cargo_criado FOREIGN KEY (created_by) REFERENCES usuario (id)
-) 
+);
 
 -- ---------------------------------------------------------------------
 -- 14. ALERTA_ESTOQUE_BAIXO (novo na v03)
@@ -269,7 +270,7 @@ CREATE TABLE alerta_estoque_baixo (
                                       CONSTRAINT chk_alerta_qtd_minima CHECK (quantidade_minima >= 0),
                                       CONSTRAINT fk_alerta_cargo FOREIGN KEY (cargo_id) REFERENCES cargo (id),
                                       CONSTRAINT fk_alerta_insumo FOREIGN KEY (insumo_id) REFERENCES insumo (id)
-) 
+);
 
 -- Índices secundários
 CREATE INDEX idx_permissao_cargo_cargo ON permissao_cargo (cargo_id);

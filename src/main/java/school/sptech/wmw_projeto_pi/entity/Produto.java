@@ -1,9 +1,8 @@
 package school.sptech.wmw_projeto_pi.entity;
 
 import jakarta.persistence.*;
-import school.sptech.wmw_projeto_pi.enums.TamanhoEnum;
+import school.sptech.wmw_projeto_pi.enums.TipoProdutoEnum;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,7 +15,9 @@ public class Produto {
     private Boolean ativo;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TamanhoEnum tamanho;
+    private TipoProdutoEnum tipo;
+    @Column(nullable = false)
+    private Integer tamanho;
     private LocalDateTime createdAt;
     @ManyToOne
     @JoinColumn(name = "created_by")
@@ -42,10 +43,11 @@ public class Produto {
     public Produto() {
     }
 
-    public Produto(Integer id, String nome, Boolean ativo, TamanhoEnum tamanho, LocalDateTime createdAt, Usuario createdBy, LocalDateTime updatedAt, Usuario updatedBy) {
+    public Produto(Integer id, String nome, Boolean ativo, TipoProdutoEnum tipo, Integer tamanho, LocalDateTime createdAt, Usuario createdBy, LocalDateTime updatedAt, Usuario updatedBy) {
         this.id = id;
         this.nome = nome;
         this.ativo = ativo;
+        this.tipo = tipo;
         this.tamanho = tamanho;
         this.createdAt = createdAt;
         this.createdBy = createdBy;
@@ -77,13 +79,9 @@ public class Produto {
         this.ativo = ativo;
     }
 
-    public TamanhoEnum getTamanho() {
-        return tamanho;
-    }
+    public Integer getTamanho() { return tamanho; }
 
-    public void setTamanho(TamanhoEnum tamanho) {
-        this.tamanho = tamanho;
-    }
+    public void setTamanho(Integer tamanho) { this.tamanho = tamanho; }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
@@ -117,4 +115,11 @@ public class Produto {
         this.createdBy = createdBy;
     }
 
+    public TipoProdutoEnum getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(TipoProdutoEnum tipo) {
+        this.tipo = tipo;
+    }
 }
