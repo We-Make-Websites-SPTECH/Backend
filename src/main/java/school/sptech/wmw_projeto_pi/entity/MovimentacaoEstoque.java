@@ -2,6 +2,7 @@ package school.sptech.wmw_projeto_pi.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import school.sptech.wmw_projeto_pi.enums.MotivoMovimentacaoEnum;
@@ -38,7 +39,7 @@ public class MovimentacaoEstoque {
     private MotivoMovimentacaoEnum motivo;
 
     @NotNull
-    @DecimalMin(value = "0", inclusive = false)
+    @DecimalMin("0")
     @Column(nullable = false, precision = 12, scale = 3)
     private BigDecimal quantidade;
 
@@ -48,6 +49,16 @@ public class MovimentacaoEstoque {
 
     @Column(name = "data_hora", nullable = false)
     private LocalDateTime dataHora;
+
+    @AssertTrue(message = "Quantidade zero somente é permitida em entrada de saldo inicial.")
+    public boolean isQuantidadeCompativelComMotivo() {
+        if (motivo == MotivoMovimentacaoEnum.SALDO_INICIAL && tipo != TipoMovimentacaoEnum.ENTRADA) {
+            return false;
+        }
+        return quantidade == null || quantidade.signum() > 0
+                || (quantidade.signum() == 0 && motivo == MotivoMovimentacaoEnum.SALDO_INICIAL
+                && tipo == TipoMovimentacaoEnum.ENTRADA);
+    }
 
     @PrePersist
     public void prePersist() {

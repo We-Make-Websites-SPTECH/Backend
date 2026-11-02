@@ -6,5 +6,6 @@ public enum MotivoMovimentacaoEnum {
     QUEBRA,
     AJUSTE,
     OUTRO,
-    CANCELAMENTO_VENDA
+    CANCELAMENTO_VENDA,
+    SALDO_INICIAL
 }

@@ -13,10 +13,10 @@ import school.sptech.wmw_projeto_pi.enums.TipoMovimentacaoEnum;
 import school.sptech.wmw_projeto_pi.exception.AjusteSemDiferencaException;
 import school.sptech.wmw_projeto_pi.exception.EstoqueInvalidoException;
 import school.sptech.wmw_projeto_pi.exception.InsumoNotFoundException;
+import school.sptech.wmw_projeto_pi.exception.InsumoDesativadoException;
 import school.sptech.wmw_projeto_pi.exception.UserNotFoundException;
 import school.sptech.wmw_projeto_pi.mapper.MovimentacaoEstoqueMapper;
 import school.sptech.wmw_projeto_pi.repository.InsumoRepository;
-import school.sptech.wmw_projeto_pi.repository.MovimentacaoEstoqueRepository;
 import school.sptech.wmw_projeto_pi.repository.UsuarioRepository;
 
 import java.math.BigDecimal;
@@ -26,15 +26,15 @@ import java.util.Optional;
 public class EstoqueService {
     private final EntityManager entityManager;
     private final InsumoRepository insumoRepository;
-    private final MovimentacaoEstoqueRepository movimentacaoEstoqueRepository;
+    private final MovimentacaoEstoqueService movimentacaoEstoqueService;
     private final UsuarioRepository usuarioRepository;
 
     public EstoqueService(InsumoRepository insumoRepository,
-                          MovimentacaoEstoqueRepository movimentacaoEstoqueRepository,
+                          MovimentacaoEstoqueService movimentacaoEstoqueService,
                           UsuarioRepository usuarioRepository, EntityManager entityManager) {
         this.entityManager = entityManager;
         this.insumoRepository = insumoRepository;
-        this.movimentacaoEstoqueRepository = movimentacaoEstoqueRepository;
+        this.movimentacaoEstoqueService = movimentacaoEstoqueService;
         this.usuarioRepository = usuarioRepository;
     }
 
@@ -75,6 +75,9 @@ public class EstoqueService {
         }
         if (motivo == MotivoMovimentacaoEnum.VENDA || motivo == MotivoMovimentacaoEnum.CANCELAMENTO_VENDA) {
             throw new EstoqueInvalidoException("Este motivo exige vínculo com uma venda e não se aplica a este fluxo.");
+        }
+        if (motivo == MotivoMovimentacaoEnum.SALDO_INICIAL) {
+            throw new EstoqueInvalidoException("Saldo inicial somente pode ser registrado no cadastro do insumo.");
         }
         validarObservacao(observacao);
         Usuario usuario = buscarUsuario(usuarioId);
@@ -135,22 +138,8 @@ public class EstoqueService {
             throw new EstoqueInvalidoException("Uma movimentação deve ter quantidade maior que zero.");
         }
 
-        MovimentacaoEstoque movimentacao = new MovimentacaoEstoque();
-        movimentacao.setInsumo(insumo);
-        movimentacao.setUsuario(usuario);
-        movimentacao.setMotivo(motivo);
-        movimentacao.setQuantidade(quantidade);
-        movimentacao.setObservacao(observacao);
-        if (diferenca.compareTo(BigDecimal.ZERO) > 0) {
-            movimentacao.setTipo(TipoMovimentacaoEnum.ENTRADA);
-        } else {
-            movimentacao.setTipo(TipoMovimentacaoEnum.SAIDA);
-        }
-
-        insumo.setQuantidadeAtual(novoSaldo);
-        insumo.setUpdatedBy(usuario);
-        insumoRepository.save(insumo);
-        movimentacaoEstoqueRepository.save(movimentacao);
+        MovimentacaoEstoque movimentacao = movimentacaoEstoqueService.registrar(
+                insumo.getId(), usuario, diferenca, motivo, observacao);
         return MovimentacaoEstoqueMapper.toResponseDto(movimentacao);
     }
 
@@ -163,6 +152,7 @@ public class EstoqueService {
             throw new InsumoNotFoundException();
         }
         entityManager.refresh(insumo.get(), LockModeType.PESSIMISTIC_WRITE);
+        if (!Boolean.TRUE.equals(insumo.get().getAtivo())) throw new InsumoDesativadoException();
         return insumo.get();
     }
 
