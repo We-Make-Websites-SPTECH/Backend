@@ -84,7 +84,6 @@ public class ProdutoInsumoMapper {
             return dto;
         }
 
-        // Obtém o produto associado à receita
         Produto produto = produtoInsumoList.get(0).getProduto();
 
         if (produto != null) {
@@ -97,7 +96,6 @@ public class ProdutoInsumoMapper {
             dto.setProduto(produtoDto);
         }
 
-        // Monta a lista de ingredientes da receita
         List<ReceitaIngredienteResponseDto> ingredientes = new ArrayList<>();
 
         for (ProdutoInsumo pi : produtoInsumoList) {

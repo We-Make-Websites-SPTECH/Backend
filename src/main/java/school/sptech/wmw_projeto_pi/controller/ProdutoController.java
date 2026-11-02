@@ -39,7 +39,6 @@ public class ProdutoController {
 
     @PostMapping
     public ResponseEntity<ProdutoResponseDtoGetAll> create(@Valid @RequestBody ProdutoRequestDtoCreate produtoRequestDto, @RequestHeader("Usuario-Id") Integer idUsuario) {
-        // preciso que o front envie o id do usuario pelo header da req. axios enquanto nao tem jwt
 
         Produto produto = ProdutoMapper.toEntityCreate(produtoRequestDto);
         Produto produtoCadastrado = produtoService.create(produto, idUsuario);

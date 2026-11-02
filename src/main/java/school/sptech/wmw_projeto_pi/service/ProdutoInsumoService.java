@@ -120,10 +120,8 @@ public class ProdutoInsumoService {
         List<ProdutoInsumo> ingredientesParaSalvar = new ArrayList<>();
         List<ProdutoInsumo> ingredientesParaRemover = new ArrayList<>();
 
-        // Copia a lista para identificar quais ingredientes são novos
         List<ProdutoInsumoItemRequestDto> ingredientesNovos = new ArrayList<>(receitaRequest.getIngredientes());
 
-        // Compara os ingredientes atuais com os recebidos
         for (ProdutoInsumo ingredienteAtual : ingredientesAtuais) {
             boolean encontrado = false;
 
@@ -132,13 +130,11 @@ public class ProdutoInsumoService {
 
                 if (ingredienteAtual.getInsumo().getId().equals(ingredienteRequest.getInsumoId())) {
 
-                    // O ingrediente continua na receita: atualiza a quantidade
                     ingredienteAtual.setQuantidade(ingredienteRequest.getQuantidade());
                     ingredienteAtual.setUpdatedBy(usuario);
 
                     ingredientesParaSalvar.add(ingredienteAtual);
 
-                    // Remove da lista temporária para não cadastrá-lo novamente
                     ingredientesNovos.remove(i);
 
                     encontrado = true;
@@ -146,16 +142,13 @@ public class ProdutoInsumoService {
                 }
             }
 
-            // Se não veio na requisição, foi removido da receita
             if (!encontrado) {
                 ingredientesParaRemover.add(ingredienteAtual);
             }
         }
 
-        // Exclui somente as associações removidas da receita
         produtoInsumoRepository.deleteAll(ingredientesParaRemover);
 
-        // Os ingredientes que sobraram na lista são novos
         for (ProdutoInsumoItemRequestDto ingredienteRequest : ingredientesNovos) {
             validarInsumo(ingredienteRequest.getInsumoId());
 
@@ -168,14 +161,12 @@ public class ProdutoInsumoService {
 
         produtoInsumoRepository.saveAll(ingredientesParaSalvar);
 
-        // Busca a composição final para retornar a receita completa
         List<ProdutoInsumo> receitaAtualizada = produtoInsumoRepository.findByProdutoId(produtoId);
 
         return ProdutoInsumoMapper.toReceitaResponseDto(receitaAtualizada);
     }
 
 
-    // VALIDAÇÕES
     public void validarProduto(Integer produtoId) {
         if (!produtoRepository.existsById(produtoId)) throw new ProductNotFoundException();
     }

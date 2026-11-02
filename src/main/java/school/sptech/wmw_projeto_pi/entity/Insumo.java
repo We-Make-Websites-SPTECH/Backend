@@ -22,6 +22,17 @@ public class Insumo {
     @Column(name = "quantidade_atual", nullable = false, precision = 12, scale = 3)
     private BigDecimal quantidadeAtual;
 
+    @Column(name = "percentual_perda", nullable = false)
+    private Integer percentualPerda;
+
+    public Integer getPercentualPerda() {
+        return percentualPerda;
+    }
+
+    public void setPercentualPerda(Integer percentualPerda) {
+        this.percentualPerda = percentualPerda;
+    }
+
     @Column(nullable = false)
     private Boolean ativo;
 

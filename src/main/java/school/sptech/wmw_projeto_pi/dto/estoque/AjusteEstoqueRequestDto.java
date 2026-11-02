@@ -9,6 +9,7 @@ public class AjusteEstoqueRequestDto {
     private Integer insumoId;
 
     @NotNull
+    @DecimalMin("0")
     private BigDecimal novoSaldo;
 
     @Size(max = 255)

@@ -1,6 +1,8 @@
 package school.sptech.wmw_projeto_pi.service;
 
-import jakarta.transaction.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import school.sptech.wmw_projeto_pi.dto.estoque.MovimentacaoEstoqueResponseDto;
 import school.sptech.wmw_projeto_pi.entity.Insumo;
@@ -22,16 +24,42 @@ import java.util.Optional;
 
 @Service
 public class EstoqueService {
+    private final EntityManager entityManager;
     private final InsumoRepository insumoRepository;
     private final MovimentacaoEstoqueRepository movimentacaoEstoqueRepository;
     private final UsuarioRepository usuarioRepository;
 
     public EstoqueService(InsumoRepository insumoRepository,
                           MovimentacaoEstoqueRepository movimentacaoEstoqueRepository,
-                          UsuarioRepository usuarioRepository) {
+                          UsuarioRepository usuarioRepository, EntityManager entityManager) {
+        this.entityManager = entityManager;
         this.insumoRepository = insumoRepository;
         this.movimentacaoEstoqueRepository = movimentacaoEstoqueRepository;
         this.usuarioRepository = usuarioRepository;
+    }
+
+    @Transactional
+    public MovimentacaoEstoqueResponseDto registrarEntrada(Integer insumoId, BigDecimal quantidadeBruta,
+                                                         MotivoMovimentacaoEnum motivo, String observacao,
+                                                         Integer usuarioId) {
+        validarDecimal(quantidadeBruta, "Quantidade bruta");
+        if (quantidadeBruta.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new EstoqueInvalidoException("A quantidade bruta deve ser maior que zero.");
+        }
+        if (motivo != MotivoMovimentacaoEnum.COMPRA && motivo != MotivoMovimentacaoEnum.OUTRO) {
+            throw new EstoqueInvalidoException("Informe COMPRA ou OUTRO como motivo da entrada.");
+        }
+        validarObservacao(observacao);
+        Usuario usuario = buscarUsuario(usuarioId);
+        Insumo insumo = buscarInsumoComBloqueio(insumoId);
+        Integer percentual = insumo.getPercentualPerda();
+        if (percentual == null || percentual < 0 || percentual >= 100) {
+            throw new EstoqueInvalidoException("Configure um percentual de perda inteiro entre 0 e 99 no insumo. Perda de 100% não é permitida.");
+        }
+        BigDecimal quantidadeLiquida = quantidadeBruta
+                .multiply(BigDecimal.valueOf(100L - percentual)).movePointLeft(2);
+        validarDecimal(quantidadeLiquida, "Quantidade após perda");
+        return aplicarMovimentacao(insumo, usuario, quantidadeLiquida, motivo, observacao);
     }
 
     @Transactional
@@ -51,13 +79,38 @@ public class EstoqueService {
         validarObservacao(observacao);
         Usuario usuario = buscarUsuario(usuarioId);
         Insumo insumo = buscarInsumoComBloqueio(insumoId);
-        return aplicarMovimentacao(insumo, usuario, quantidade.negate(), motivo, observacao);
+        if (insumo.getQuantidadeAtual().compareTo(BigDecimal.ZERO) < 0) {
+            throw new EstoqueInvalidoException("O insumo possui saldo negativo preexistente e precisa ser regularizado por ajuste.");
+        }
+        BigDecimal quantidadeEfetivada = quantidade.min(insumo.getQuantidadeAtual());
+        MovimentacaoEstoqueResponseDto resposta;
+        if (quantidadeEfetivada.compareTo(BigDecimal.ZERO) == 0) {
+            resposta = new MovimentacaoEstoqueResponseDto();
+            resposta.setInsumoId(insumoId);
+            resposta.setUsuarioId(usuarioId);
+            resposta.setTipo(TipoMovimentacaoEnum.SAIDA);
+            resposta.setMotivo(motivo);
+            resposta.setQuantidade(BigDecimal.ZERO);
+            resposta.setSaldoAtual(insumo.getQuantidadeAtual());
+            resposta.setObservacao(observacao);
+        } else {
+            resposta = aplicarMovimentacao(insumo, usuario, quantidadeEfetivada.negate(), motivo, observacao);
+        }
+        resposta.setQuantidadeSolicitada(quantidade);
+        resposta.setQuantidadeEfetivada(quantidadeEfetivada);
+        if (quantidade.compareTo(quantidadeEfetivada) > 0) {
+            resposta.setAviso("A quantidade solicitada excede o disponível em estoque. O saldo ficou zerado; somente a quantidade disponível foi descontada.");
+        }
+        return resposta;
     }
 
     @Transactional
     public MovimentacaoEstoqueResponseDto ajustarSaldo(Integer insumoId, BigDecimal novoSaldo,
                                                      String observacao, Integer usuarioId) {
         validarDecimal(novoSaldo, "Novo saldo");
+        if (novoSaldo.compareTo(BigDecimal.ZERO) < 0) {
+            throw new EstoqueInvalidoException("O novo saldo não pode ser negativo.");
+        }
         validarObservacao(observacao);
         Usuario usuario = buscarUsuario(usuarioId);
         Insumo insumo = buscarInsumoComBloqueio(insumoId);
@@ -75,6 +128,12 @@ public class EstoqueService {
         BigDecimal novoSaldo = insumo.getQuantidadeAtual().add(diferenca);
         validarDecimal(quantidade, "Quantidade da movimentação");
         validarDecimal(novoSaldo, "Saldo resultante");
+        if (novoSaldo.compareTo(BigDecimal.ZERO) < 0) {
+            throw new EstoqueInvalidoException("O saldo resultante não pode ser negativo.");
+        }
+        if (quantidade.compareTo(BigDecimal.ZERO) == 0) {
+            throw new EstoqueInvalidoException("Uma movimentação deve ter quantidade maior que zero.");
+        }
 
         MovimentacaoEstoque movimentacao = new MovimentacaoEstoque();
         movimentacao.setInsumo(insumo);
@@ -103,6 +162,7 @@ public class EstoqueService {
         if (insumo.isEmpty()) {
             throw new InsumoNotFoundException();
         }
+        entityManager.refresh(insumo.get(), LockModeType.PESSIMISTIC_WRITE);
         return insumo.get();
     }
 

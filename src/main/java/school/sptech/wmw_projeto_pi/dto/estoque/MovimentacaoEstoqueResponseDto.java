@@ -13,12 +13,39 @@ public class MovimentacaoEstoqueResponseDto {
     private TipoMovimentacaoEnum tipo;
     private MotivoMovimentacaoEnum motivo;
     private BigDecimal quantidade;
+    private BigDecimal quantidadeSolicitada;
+    private BigDecimal quantidadeEfetivada;
+    private String aviso;
     private BigDecimal saldoAtual;
     private String observacao;
     private LocalDateTime dataHora;
 
     public Long getId() {
         return id;
+    }
+
+    public BigDecimal getQuantidadeSolicitada() {
+        return quantidadeSolicitada;
+    }
+
+    public void setQuantidadeSolicitada(BigDecimal quantidadeSolicitada) {
+        this.quantidadeSolicitada = quantidadeSolicitada;
+    }
+
+    public BigDecimal getQuantidadeEfetivada() {
+        return quantidadeEfetivada;
+    }
+
+    public void setQuantidadeEfetivada(BigDecimal quantidadeEfetivada) {
+        this.quantidadeEfetivada = quantidadeEfetivada;
+    }
+
+    public String getAviso() {
+        return aviso;
+    }
+
+    public void setAviso(String aviso) {
+        this.aviso = aviso;
     }
 
     public void setId(Long id) {

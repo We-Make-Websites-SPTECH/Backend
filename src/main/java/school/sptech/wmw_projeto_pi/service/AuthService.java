@@ -66,7 +66,6 @@ public class AuthService {
         try {
             return passwordEncoder.matches(senha, hash);
         } catch (IllegalArgumentException exception) {
-            // Senhas antigas sem hash ou hashes invalidos exigem redefinicao.
             return false;
         }
     }
