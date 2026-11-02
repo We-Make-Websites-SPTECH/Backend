@@ -213,13 +213,13 @@ CREATE TABLE movimentacao_estoque (
                                       item_venda_insumo_id INT NULL,
                                       usuario_id INT NOT NULL,
                                       tipo VARCHAR(32) NOT NULL CHECK (tipo IN ('ENTRADA','SAIDA')),
-                                      motivo VARCHAR(32) NOT NULL CHECK (motivo IN ('VENDA','COMPRA','QUEBRA','AJUSTE','OUTRO','CANCELAMENTO_VENDA')),
+                                      motivo VARCHAR(32) NOT NULL CHECK (motivo IN ('VENDA','COMPRA','QUEBRA','AJUSTE','OUTRO','CANCELAMENTO_VENDA','SALDO_INICIAL')),
                                       quantidade DECIMAL(12,3) NOT NULL,
                                       observacao VARCHAR(255) NULL,
                                       data_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                       PRIMARY KEY (id),
                                       CONSTRAINT uq_mov_item_venda_insumo_tipo UNIQUE (item_venda_insumo_id, tipo),
-                                      CONSTRAINT chk_mov_qtd_positiva CHECK (quantidade > 0),
+                                      CONSTRAINT chk_mov_qtd_positiva CHECK (quantidade > 0 OR (quantidade = 0 AND motivo = 'SALDO_INICIAL' AND tipo = 'ENTRADA')),
                                       CONSTRAINT chk_mov_venda_consistente CHECK (
                                           (motivo IN ('VENDA', 'CANCELAMENTO_VENDA') AND item_venda_insumo_id IS NOT NULL) OR
                                           (motivo NOT IN ('VENDA', 'CANCELAMENTO_VENDA') AND item_venda_insumo_id IS NULL)

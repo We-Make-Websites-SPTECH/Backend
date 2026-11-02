@@ -8,6 +8,7 @@ import school.sptech.wmw_projeto_pi.entity.Produto;
 import school.sptech.wmw_projeto_pi.entity.ProdutoInsumo;
 import school.sptech.wmw_projeto_pi.entity.Usuario;
 import school.sptech.wmw_projeto_pi.exception.InsumoNotFoundException;
+import school.sptech.wmw_projeto_pi.exception.InsumoDesativadoException;
 import school.sptech.wmw_projeto_pi.exception.ProductNotFoundException;
 import school.sptech.wmw_projeto_pi.exception.ReceitaNotFoundException;
 import school.sptech.wmw_projeto_pi.exception.UserNotFoundException;
@@ -123,6 +124,10 @@ public class ProdutoInsumoService {
         // Copia a lista para identificar quais ingredientes são novos
         List<ProdutoInsumoItemRequestDto> ingredientesNovos = new ArrayList<>(receitaRequest.getIngredientes());
 
+        for (ProdutoInsumoItemRequestDto ingrediente : ingredientesNovos) {
+            validarInsumo(ingrediente.getInsumoId());
+        }
+
         // Compara os ingredientes atuais com os recebidos
         for (ProdutoInsumo ingredienteAtual : ingredientesAtuais) {
             boolean encontrado = false;
@@ -185,7 +190,10 @@ public class ProdutoInsumoService {
     }
 
     public void validarInsumo(Integer insumoId) {
-        if (!insumoRepository.existsById(insumoId)) throw new InsumoNotFoundException();
+        Insumo insumo = insumoRepository.buscarParaAtualizar(insumoId).orElseThrow(InsumoNotFoundException::new);
+        if (!Boolean.TRUE.equals(insumo.getAtivo())) {
+            throw new InsumoDesativadoException();
+        }
     }
 
 }

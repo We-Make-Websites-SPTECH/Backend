@@ -19,7 +19,7 @@ public class Insumo {
     @Column(name = "unidade_medida", nullable = false)
     private UnidadeMedidaEnum unidadeMedida;
 
-    @Column(name = "quantidade_atual", nullable = false)
+    @Column(name = "quantidade_atual", nullable = false, precision = 12, scale = 3)
     private BigDecimal quantidadeAtual;
 
     @Column(nullable = false)
