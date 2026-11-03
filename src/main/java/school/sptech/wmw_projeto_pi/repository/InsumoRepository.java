@@ -9,4 +9,8 @@ import school.sptech.wmw_projeto_pi.entity.Insumo;
 public interface InsumoRepository extends JpaRepository<Insumo, Integer> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Insumo> findInsumoById(Integer id);
+
+    Long countByAtivoTrue();
+
+    Long countByAtivoFalse();
 }
