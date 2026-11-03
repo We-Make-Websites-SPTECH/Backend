@@ -3,9 +3,11 @@ package school.sptech.wmw_projeto_pi.service;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.stereotype.Service;
 import school.sptech.wmw_projeto_pi.dto.estoque.MovimentacaoEstoqueResponseDto;
 import school.sptech.wmw_projeto_pi.entity.Insumo;
+import school.sptech.wmw_projeto_pi.entity.ImportacaoLinhaConsumo;
 import school.sptech.wmw_projeto_pi.entity.MovimentacaoEstoque;
 import school.sptech.wmw_projeto_pi.entity.Usuario;
 import school.sptech.wmw_projeto_pi.enums.MotivoMovimentacaoEnum;
@@ -73,7 +75,7 @@ public class EstoqueService {
         if (motivo == null) {
             throw new EstoqueInvalidoException("Informe um motivo existente para a saída.");
         }
-        if (motivo == MotivoMovimentacaoEnum.VENDA || motivo == MotivoMovimentacaoEnum.CANCELAMENTO_VENDA) {
+        if (motivo == MotivoMovimentacaoEnum.CONSUMO_PRODUTO || motivo == MotivoMovimentacaoEnum.VENDA || motivo == MotivoMovimentacaoEnum.CANCELAMENTO_VENDA) {
             throw new EstoqueInvalidoException("Este motivo exige vínculo com uma venda e não se aplica a este fluxo.");
         }
         validarObservacao(observacao);
@@ -104,6 +106,30 @@ public class EstoqueService {
         return resposta;
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void registrarSaidaPorConsumo(ImportacaoLinhaConsumo consumo, Integer usuarioId) {
+        if (consumo.getId() == null || consumo.getQuantidadeEfetivada() != null) {
+            throw new EstoqueInvalidoException("Consumo não persistido ou já efetivado.");
+        }
+        validarDecimal(consumo.getQuantidadePrevista(), "Consumo previsto");
+        if (consumo.getQuantidadePrevista().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new EstoqueInvalidoException("Consumo previsto deve ser positivo.");
+        }
+        Usuario usuario = buscarUsuario(usuarioId);
+        Insumo insumo = buscarInsumoComBloqueio(consumo.getInsumo().getId());
+        if (!Boolean.TRUE.equals(insumo.getAtivo()) || insumo.getQuantidadeAtual().compareTo(BigDecimal.ZERO) < 0) {
+            throw new EstoqueInvalidoException("Insumo desativado ou com saldo negativo preexistente.");
+        }
+        BigDecimal efetivo = consumo.getQuantidadePrevista().min(insumo.getQuantidadeAtual());
+        if (efetivo.compareTo(BigDecimal.ZERO) > 0) {
+            aplicarMovimentacao(insumo, usuario, efetivo.negate(), MotivoMovimentacaoEnum.CONSUMO_PRODUTO, null, consumo);
+        }
+        consumo.setQuantidadeEfetivada(efetivo);
+        if (efetivo.compareTo(consumo.getQuantidadePrevista()) < 0) {
+            consumo.setAviso("Estoque insuficiente: saldo zerado; descontada somente a quantidade disponível.");
+        }
+    }
+
     @Transactional
     public MovimentacaoEstoqueResponseDto ajustarSaldo(Integer insumoId, BigDecimal novoSaldo,
                                                      String observacao, Integer usuarioId) {
@@ -124,6 +150,12 @@ public class EstoqueService {
     private MovimentacaoEstoqueResponseDto aplicarMovimentacao(Insumo insumo, Usuario usuario,
                                                               BigDecimal diferenca, MotivoMovimentacaoEnum motivo,
                                                               String observacao) {
+        return aplicarMovimentacao(insumo, usuario, diferenca, motivo, observacao, null);
+    }
+
+    private MovimentacaoEstoqueResponseDto aplicarMovimentacao(Insumo insumo, Usuario usuario,
+                                                              BigDecimal diferenca, MotivoMovimentacaoEnum motivo,
+                                                              String observacao, ImportacaoLinhaConsumo consumo) {
         BigDecimal quantidade = diferenca.abs();
         BigDecimal novoSaldo = insumo.getQuantidadeAtual().add(diferenca);
         validarDecimal(quantidade, "Quantidade da movimentação");
@@ -136,6 +168,7 @@ public class EstoqueService {
         }
 
         MovimentacaoEstoque movimentacao = new MovimentacaoEstoque();
+        movimentacao.setConsumoImportacao(consumo);
         movimentacao.setInsumo(insumo);
         movimentacao.setUsuario(usuario);
         movimentacao.setMotivo(motivo);

@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "movimentacao_estoque")
+@Table(name = "movimentacao_estoque", uniqueConstraints=@UniqueConstraint(columnNames={"importacao_linha_consumo_id", "tipo"}))
 public class MovimentacaoEstoque {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,6 +48,13 @@ public class MovimentacaoEstoque {
 
     @Column(name = "data_hora", nullable = false)
     private LocalDateTime dataHora;
+
+    @ManyToOne
+    @JoinColumn(name="importacao_linha_consumo_id")
+    private ImportacaoLinhaConsumo consumoImportacao;
+
+    public ImportacaoLinhaConsumo getConsumoImportacao() { return consumoImportacao; }
+    public void setConsumoImportacao(ImportacaoLinhaConsumo consumo) { this.consumoImportacao = consumo; }
 
     @PrePersist
     public void prePersist() {
