@@ -16,8 +16,4 @@ public class UsuarioMapper {
 
         return usuarioResponseDto;
     }
-
-
-
-
 }

@@ -1,33 +1,54 @@
 package school.sptech.wmw_projeto_pi.controller;
 
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
+import school.sptech.wmw_projeto_pi.dto.importacao.ConsumoPersonalizacaoRequestDto;
+import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoConfirmacaoRequestDto;
+import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoLinhaResponseDto;
+import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoResultadoResponseDto;
+import school.sptech.wmw_projeto_pi.dto.importacao.LancamentoManualPreviaResponseDto;
+import school.sptech.wmw_projeto_pi.dto.importacao.LancamentoManualRequestDto;
 import school.sptech.wmw_projeto_pi.service.LancamentoManualService;
-import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoDtos.*;
-import school.sptech.wmw_projeto_pi.dto.importacao.LancamentoManualDtos.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/lancamentos/manuais")
-@CrossOrigin(origins="http://localhost:5173")
+@CrossOrigin(origins = "http://localhost:5173")
 public class LancamentoManualController {
     private final LancamentoManualService service;
-    public LancamentoManualController(LancamentoManualService service) { this.service=service; }
+
+    public LancamentoManualController(LancamentoManualService service) {
+        this.service = service;
+    }
+
     @PostMapping("/previa")
-    public ResponseEntity<Previa> preparar(@Valid @RequestBody Pedido pedido,@RequestHeader("Usuario-Id") Integer usuarioId) {
-        return ResponseEntity.status(201).body(service.preparar(pedido,usuarioId));
+    public ResponseEntity<LancamentoManualPreviaResponseDto> preparar(
+            @Valid @RequestBody LancamentoManualRequestDto pedido,
+            @RequestHeader("Usuario-Id") Integer usuarioId) {
+        return ResponseEntity.status(201).body(service.preparar(pedido, usuarioId));
     }
+
     @GetMapping("/{id}")
-    public Previa consultar(@PathVariable Long id) { return service.consultar(id); }
-    @PatchMapping("/{id}/linhas/{linhaId}")
-    public Linha corrigir(@PathVariable Long id,@PathVariable Long linhaId,@Valid @RequestBody CorrecaoManual pedido,
-                          @RequestHeader("Usuario-Id") Integer usuarioId) {
-        return service.corrigir(id,linhaId,pedido,usuarioId);
+    public ResponseEntity<LancamentoManualPreviaResponseDto> consultar(@PathVariable Long id) {
+        return ResponseEntity.ok(service.consultar(id));
     }
+
+    @PatchMapping("/{id}/linhas/{linhaId}/ingredientes")
+    public ResponseEntity<ImportacaoLinhaResponseDto> personalizar(
+            @PathVariable Long id,
+            @PathVariable Long linhaId,
+            @Valid @RequestBody ConsumoPersonalizacaoRequestDto pedido,
+            @RequestHeader("Usuario-Id") Integer usuarioId) {
+        return ResponseEntity.ok(service.personalizar(id, linhaId, pedido, usuarioId));
+    }
+
     @PostMapping("/{id}/confirmar")
-    public List<Resultado> confirmar(@PathVariable Long id,@Valid @RequestBody Confirmacao pedido,
-                                    @RequestHeader("Usuario-Id") Integer usuarioId) {
-        return service.confirmar(id,pedido,usuarioId);
+    public ResponseEntity<List<ImportacaoResultadoResponseDto>> confirmar(
+            @PathVariable Long id,
+            @Valid @RequestBody ImportacaoConfirmacaoRequestDto pedido,
+            @RequestHeader("Usuario-Id") Integer usuarioId) {
+        return ResponseEntity.ok(service.confirmar(id, pedido, usuarioId));
     }
 }

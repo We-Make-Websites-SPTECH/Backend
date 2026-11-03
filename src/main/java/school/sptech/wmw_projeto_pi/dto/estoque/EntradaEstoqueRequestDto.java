@@ -1,7 +1,9 @@
 package school.sptech.wmw_projeto_pi.dto.estoque;
 
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import school.sptech.wmw_projeto_pi.enums.MotivoMovimentacaoEnum;
 
@@ -9,10 +11,12 @@ import java.math.BigDecimal;
 
 public class EntradaEstoqueRequestDto {
     @NotNull
+    @Positive
     private Integer insumoId;
 
     @NotNull
     @DecimalMin(value = "0", inclusive = false)
+    @Digits(integer = 9, fraction = 3)
     private BigDecimal quantidadeBruta;
 
     @NotNull

@@ -1,44 +1,75 @@
 package school.sptech.wmw_projeto_pi.controller;
+
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.http.*;
-import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
+import school.sptech.wmw_projeto_pi.dto.importacao.ConsumoPersonalizacaoRequestDto;
+import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoConfirmacaoRequestDto;
+import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoLinhaResponseDto;
+import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoResumoResponseDto;
+import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoResultadoResponseDto;
+import school.sptech.wmw_projeto_pi.service.ProcessamentoConsumoService;
+import school.sptech.wmw_projeto_pi.service.RegistroConsumoService;
+
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
-import school.sptech.wmw_projeto_pi.service.*;
-import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoDtos.*;
 
 @RestController
 @RequestMapping("/importacoes")
-@CrossOrigin(origins="http://localhost:5173")
+@CrossOrigin(origins = "http://localhost:5173")
 public class ImportacaoController {
-    private final ImportacaoService service;
-    private final ImportacaoLinhaService linhas;
-    public ImportacaoController(ImportacaoService service,ImportacaoLinhaService linhas) { this.service=service;this.linhas=linhas; }
-    @PostMapping(value="/txt",consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Resumo> upload(@RequestParam MultipartFile arquivo,
-            @RequestParam @DateTimeFormat(iso=DateTimeFormat.ISO.DATE) LocalDate dataReferencia,
+    private final RegistroConsumoService service;
+    private final ProcessamentoConsumoService processamento;
+
+    public ImportacaoController(RegistroConsumoService service, ProcessamentoConsumoService processamento) {
+        this.service = service;
+        this.processamento = processamento;
+    }
+
+    @PostMapping(value = "/txt", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ImportacaoResumoResponseDto> upload(
+            @RequestParam MultipartFile arquivo,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataReferencia,
             @RequestHeader("Usuario-Id") Integer usuarioId) throws IOException {
-        return ResponseEntity.status(201).body(service.receber(arquivo.getOriginalFilename(),arquivo.getBytes(),dataReferencia,usuarioId));
+        return ResponseEntity.status(201).body(
+                service.receber(arquivo.getOriginalFilename(), arquivo.getBytes(), dataReferencia, usuarioId)
+        );
     }
-    @GetMapping public Page<Resumo> listar(@RequestParam(defaultValue="0") int pagina,@RequestParam(defaultValue="20") int tamanho) {
-        validarPagina(pagina,tamanho);return service.listar(pagina,tamanho);
+
+    @GetMapping
+    public ResponseEntity<List<ImportacaoResumoResponseDto>> listar() {
+        return ResponseEntity.ok(service.listar());
     }
-    @GetMapping("/{id}") public Resumo consultar(@PathVariable Long id) { return service.consultar(id); }
-    @GetMapping("/{id}/linhas") public Page<Linha> linhas(@PathVariable Long id,@RequestParam(defaultValue="0") int pagina,@RequestParam(defaultValue="20") int tamanho) {
-        validarPagina(pagina,tamanho);return service.linhas(id,pagina,tamanho);
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ImportacaoResumoResponseDto> consultar(@PathVariable Long id) {
+        return ResponseEntity.ok(service.consultar(id));
     }
-    @PatchMapping("/{id}/linhas/{linhaId}") public Linha corrigir(@PathVariable Long id,@PathVariable Long linhaId,
-            @Valid @RequestBody Correcao dados,@RequestHeader("Usuario-Id") Integer usuarioId) {
-        return linhas.corrigir(id,linhaId,dados,usuarioId);
+
+    @GetMapping("/{id}/linhas")
+    public ResponseEntity<List<ImportacaoLinhaResponseDto>> linhas(@PathVariable Long id) {
+        return ResponseEntity.ok(service.linhas(id));
     }
-    @PostMapping("/{id}/confirmar") public List<Resultado> confirmar(@PathVariable Long id,@Valid @RequestBody Confirmacao pedido,
-            @RequestHeader("Usuario-Id") Integer usuarioId) { return service.confirmar(id,pedido,usuarioId); }
-    private void validarPagina(int pagina,int tamanho) {
-        if(pagina<0 || tamanho<1 || tamanho>100) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Página >= 0 e tamanho entre 1 e 100.");
+
+    @PatchMapping("/{id}/linhas/{linhaId}/ingredientes")
+    public ResponseEntity<ImportacaoLinhaResponseDto> personalizar(
+            @PathVariable Long id,
+            @PathVariable Long linhaId,
+            @Valid @RequestBody ConsumoPersonalizacaoRequestDto dados,
+            @RequestHeader("Usuario-Id") Integer usuarioId) {
+        return ResponseEntity.ok(processamento.personalizar(id, linhaId, dados, usuarioId));
     }
+
+    @PostMapping("/{id}/confirmar")
+    public ResponseEntity<List<ImportacaoResultadoResponseDto>> confirmar(
+            @PathVariable Long id,
+            @Valid @RequestBody ImportacaoConfirmacaoRequestDto pedido,
+            @RequestHeader("Usuario-Id") Integer usuarioId) {
+        return ResponseEntity.ok(service.confirmar(id, pedido, usuarioId));
+    }
+
 }

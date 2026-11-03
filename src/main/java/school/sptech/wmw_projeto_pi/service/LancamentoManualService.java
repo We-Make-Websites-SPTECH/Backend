@@ -1,83 +1,133 @@
 package school.sptech.wmw_projeto_pi.service;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import java.time.LocalDateTime;
-import java.math.BigDecimal;
-import java.util.*;
-import school.sptech.wmw_projeto_pi.entity.*;
+import school.sptech.wmw_projeto_pi.dto.importacao.ConsumoPersonalizacaoRequestDto;
+import school.sptech.wmw_projeto_pi.dto.importacao.ConsumoInsumoResponseDto;
+import school.sptech.wmw_projeto_pi.dto.importacao.ConsumoTotalResponseDto;
+import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoConfirmacaoRequestDto;
+import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoLinhaResponseDto;
+import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoResultadoResponseDto;
+import school.sptech.wmw_projeto_pi.dto.importacao.LancamentoManualItemRequestDto;
+import school.sptech.wmw_projeto_pi.dto.importacao.LancamentoManualPreviaResponseDto;
+import school.sptech.wmw_projeto_pi.dto.importacao.LancamentoManualRequestDto;
+import school.sptech.wmw_projeto_pi.entity.Importacao;
+import school.sptech.wmw_projeto_pi.entity.ImportacaoLinha;
+import school.sptech.wmw_projeto_pi.entity.Usuario;
 import school.sptech.wmw_projeto_pi.enums.OrigemRegistroEnum;
-import school.sptech.wmw_projeto_pi.repository.*;
-import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoDtos.*;
-import school.sptech.wmw_projeto_pi.dto.importacao.LancamentoManualDtos.*;
+import school.sptech.wmw_projeto_pi.repository.ImportacaoLinhaRepository;
+import school.sptech.wmw_projeto_pi.repository.ImportacaoRepository;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class LancamentoManualService {
     private final ImportacaoRepository registros;
     private final ImportacaoLinhaRepository linhas;
-    private final ProdutoRepository produtos;
-    private final UsuarioRepository usuarios;
-    private final ImportacaoLinhaService worker;
-    private final ImportacaoService importacoes;
+    private final ProcessamentoConsumoService processamento;
+    private final RegistroConsumoService registrosConsumo;
 
-    public LancamentoManualService(ImportacaoRepository registros,ImportacaoLinhaRepository linhas,
-            ProdutoRepository produtos,UsuarioRepository usuarios,ImportacaoLinhaService worker,ImportacaoService importacoes) {
-        this.registros=registros;this.linhas=linhas;this.produtos=produtos;
-        this.usuarios=usuarios;this.worker=worker;this.importacoes=importacoes;
+    public LancamentoManualService(
+            ImportacaoRepository registros,
+            ImportacaoLinhaRepository linhas,
+            ProcessamentoConsumoService processamento,
+            RegistroConsumoService registrosConsumo) {
+        this.registros = registros;
+        this.linhas = linhas;
+        this.processamento = processamento;
+        this.registrosConsumo = registrosConsumo;
     }
 
-    @Transactional(isolation=Isolation.REPEATABLE_READ)
-    public Previa preparar(Pedido pedido,Integer usuarioId) {
-        worker.validarUsuario(usuarioId);
-        Importacao registro=new Importacao();
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    public LancamentoManualPreviaResponseDto preparar(LancamentoManualRequestDto pedido, Integer usuarioId) {
+        Usuario usuario = processamento.buscarUsuario(usuarioId);
+
+        Importacao registro = new Importacao();
         registro.setOrigem(OrigemRegistroEnum.MANUAL);
-        registro.setDataReferencia(pedido.dataReferencia());
-        registro.setCriadoEm(LocalDateTime.now());
-        registro.setUsuario(usuarios.findById(usuarioId).orElseThrow());
+        registro.setDataReferencia(pedido.getDataReferencia());
+        registro.setCreatedAt(LocalDateTime.now());
+        registro.setUsuario(usuario);
         registros.save(registro);
-        int numero=0;
-        for(Item item:pedido.itens()) {
-            ImportacaoLinha linha=new ImportacaoLinha();
-            linha.setImportacao(registro);linha.setNumeroLinha(++numero);
-            linha.setIdOriginal(item.produtoId().toString());linha.setQuantidadeOriginal(item.quantidade().toString());
-            worker.preparar(linha,item.produtoId(),nomeProduto(item.produtoId()),item.quantidade());
+
+        int numero = 0;
+
+        for (LancamentoManualItemRequestDto item : pedido.getItens()) {
+            ImportacaoLinha linha = new ImportacaoLinha();
+            linha.setImportacao(registro);
+            linha.setNumeroLinha(++numero);
+
+            processamento.prepararManual(linha, item.getProdutoId(), item.getQuantidade().intValueExact());
         }
+
         linhas.flush();
+        registrosConsumo.exigirValidas(registro.getId());
+
         return previa(registro.getId());
     }
 
-    @Transactional(readOnly=true,isolation=Isolation.REPEATABLE_READ)
-    public Previa consultar(Long id) { conferirManual(id);return previa(id); }
-
-    @Transactional(isolation=Isolation.REPEATABLE_READ)
-    public Linha corrigir(Long id,Long linhaId,CorrecaoManual pedido,Integer usuarioId) {
+    @Transactional(readOnly = true)
+    public LancamentoManualPreviaResponseDto consultar(Long id) {
         conferirManual(id);
-        return worker.corrigir(id,linhaId,new Correcao(pedido.produtoId(),nomeProduto(pedido.produtoId()),
-                pedido.quantidade(),pedido.versao()),usuarioId);
+
+        return previa(id);
     }
 
-    public List<Resultado> confirmar(Long id,Confirmacao pedido,Integer usuarioId) {
+    public ImportacaoLinhaResponseDto personalizar(
+            Long id, Long linhaId, ConsumoPersonalizacaoRequestDto pedido, Integer usuarioId) {
         conferirManual(id);
-        return importacoes.confirmar(id,pedido,usuarioId);
+
+        return processamento.personalizar(id, linhaId, pedido, usuarioId);
     }
 
-    private String nomeProduto(Integer produtoId) {
-        return produtos.findById(produtoId).map(Produto::getNome).orElse("Produto inexistente");
+    public List<ImportacaoResultadoResponseDto> confirmar(
+            Long id, ImportacaoConfirmacaoRequestDto pedido, Integer usuarioId) {
+        conferirManual(id);
+
+        return registrosConsumo.confirmar(id, pedido, usuarioId);
     }
+
     private void conferirManual(Long id) {
-        Importacao registro=registros.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Registro inexistente."));
-        if(registro.getOrigem()!=OrigemRegistroEnum.MANUAL)
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Registro nao e um lancamento manual.");
+        Importacao registro = registros.findById(id).orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Registro inexistente."
+        ));
+
+        if (registro.getOrigem() != OrigemRegistroEnum.MANUAL) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Registro não é manual.");
+        }
     }
-    private Previa previa(Long id) {
-        List<Linha> detalhes=importacoes.linhas(id,0,100).getContent();
-        Map<Integer,BigDecimal> totais=new TreeMap<>();
-        for(Linha linha:detalhes) for(Consumo consumo:linha.consumo())
-            totais.merge(consumo.insumoId(),consumo.previsto(),BigDecimal::add);
-        return new Previa(importacoes.consultar(id),detalhes,totais.entrySet().stream()
-                .map(e->new TotalConsumo(e.getKey(),e.getValue())).toList());
+
+    private LancamentoManualPreviaResponseDto previa(Long id) {
+        List<ImportacaoLinhaResponseDto> detalhes = registrosConsumo.linhas(id);
+        List<ConsumoTotalResponseDto> consumoAgregado = new ArrayList<>();
+
+        for (ImportacaoLinhaResponseDto linha : detalhes) {
+            for (ConsumoInsumoResponseDto consumo : linha.getConsumo()) {
+                int posicao = 0;
+
+                while (posicao < consumoAgregado.size()
+                        && consumoAgregado.get(posicao).getInsumoId() < consumo.getInsumoId()) {
+                    posicao++;
+                }
+
+                if (posicao < consumoAgregado.size()
+                        && consumoAgregado.get(posicao).getInsumoId().equals(consumo.getInsumoId())) {
+                    ConsumoTotalResponseDto total = consumoAgregado.get(posicao);
+                    BigDecimal quantidade = total.getQuantidadePrevista().add(consumo.getPrevisto());
+                    total.setQuantidadePrevista(quantidade);
+                } else {
+                    consumoAgregado.add(posicao, new ConsumoTotalResponseDto(
+                            consumo.getInsumoId(), consumo.getPrevisto()
+                    ));
+                }
+            }
+        }
+
+        return new LancamentoManualPreviaResponseDto(registrosConsumo.consultar(id), detalhes, consumoAgregado);
     }
 }

@@ -6,5 +6,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(code = HttpStatus.NOT_FOUND)
 public class ReceitaNotFoundException extends RuntimeException {
     public ReceitaNotFoundException() {
+        this("Receita não encontrada.");
+    }
+
+    public ReceitaNotFoundException(String mensagem) {
+        super(mensagem);
     }
 }

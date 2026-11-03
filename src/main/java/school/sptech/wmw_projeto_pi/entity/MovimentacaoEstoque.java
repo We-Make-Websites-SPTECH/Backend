@@ -53,8 +53,13 @@ public class MovimentacaoEstoque {
     @JoinColumn(name="importacao_linha_consumo_id")
     private ImportacaoLinhaConsumo consumoImportacao;
 
-    public ImportacaoLinhaConsumo getConsumoImportacao() { return consumoImportacao; }
-    public void setConsumoImportacao(ImportacaoLinhaConsumo consumo) { this.consumoImportacao = consumo; }
+    public ImportacaoLinhaConsumo getConsumoImportacao() {
+        return consumoImportacao;
+    }
+
+    public void setConsumoImportacao(ImportacaoLinhaConsumo consumo) {
+        this.consumoImportacao = consumo;
+    }
 
     @PrePersist
     public void prePersist() {

@@ -11,18 +11,25 @@ public class Produto {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     private String nome;
+
     private Boolean ativo;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TipoProdutoEnum tipo;
+
     @Column(nullable = false)
     private Integer tamanho;
     private LocalDateTime createdAt;
+
     @ManyToOne
     @JoinColumn(name = "created_by")
     private Usuario createdBy;
+
     private LocalDateTime updatedAt;
+
     @ManyToOne
     @JoinColumn(name = "updated_by")
     private Usuario updatedBy;

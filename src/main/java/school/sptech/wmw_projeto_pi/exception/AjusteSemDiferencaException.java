@@ -6,6 +6,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(code = HttpStatus.CONFLICT)
 public class AjusteSemDiferencaException extends RuntimeException {
     public AjusteSemDiferencaException() {
-        super("O novo saldo é igual ao saldo atual. Nenhuma movimentação foi registrada.");
+        this("O novo saldo é igual ao saldo atual. Nenhuma movimentação foi registrada.");
+    }
+
+    public AjusteSemDiferencaException(String mensagem) {
+        super(mensagem);
     }
 }

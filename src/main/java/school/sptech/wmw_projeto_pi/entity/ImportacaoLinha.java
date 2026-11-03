@@ -1,69 +1,159 @@
 package school.sptech.wmw_projeto_pi.entity;
 
 import jakarta.persistence.*;
-import java.time.*;
-import java.math.BigDecimal;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import school.sptech.wmw_projeto_pi.enums.StatusImportacaoLinhaEnum;
 
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name="importacao_linha", uniqueConstraints=@UniqueConstraint(columnNames={"importacao_id", "numero_linha"}))
+@Table(
+        name = "importacao_linha",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"importacao_id", "numero_linha"})
+)
 public class ImportacaoLinha {
-    @Id @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @ManyToOne @JoinColumn(name="importacao_id",nullable=false)
+
+    @NotNull
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "importacao_id", nullable = false)
     private Importacao importacao;
-    @Column(nullable=false)
+
+    @NotNull
+    @Positive
+    @Column(nullable = false)
     private Integer numeroLinha;
-    @Column(columnDefinition="MEDIUMTEXT")
-    private String textoOriginal;
-    @Column(columnDefinition="MEDIUMTEXT")
+
+    @Size(max = 255)
     private String nomeAtual;
-    @Column(columnDefinition="MEDIUMTEXT")
-    private String idOriginal;
-    @Column(columnDefinition="MEDIUMTEXT")
-    private String quantidadeOriginal;
-    @ManyToOne @JoinColumn(name="produto_id")
+
+    @ManyToOne
+    @JoinColumn(name = "produto_id")
     private Produto produto;
 
     private Integer quantidadeAtual;
-    @Enumerated(EnumType.STRING) @Column(nullable=false)
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
     private StatusImportacaoLinhaEnum status;
-    @Column(length=60)
+
+    @Size(max = 60)
+    @Column(length = 60)
     private String erroCodigo;
-    @Column(length=255)
+
+    @Size(max = 255)
     private String erroMensagem;
 
     private LocalDateTime processadoEm;
-    private java.time.LocalDateTime atualizadoEm;
-    public void marcarCorrecao() { atualizadoEm = java.time.LocalDateTime.now(); }
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     @Version
     private Long versao;
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public Importacao getImportacao() { return importacao; }
-    public void setImportacao(Importacao importacao) { this.importacao = importacao; }
-    public Integer getNumeroLinha() { return numeroLinha; }
-    public void setNumeroLinha(Integer numeroLinha) { this.numeroLinha = numeroLinha; }
-    public String getTextoOriginal() { return textoOriginal; }
-    public void setTextoOriginal(String textoOriginal) { this.textoOriginal = textoOriginal; }
-    public String getNomeAtual() { return nomeAtual; }
-    public void setNomeAtual(String nomeAtual) { this.nomeAtual = nomeAtual; }
-    public String getIdOriginal() { return idOriginal; }
-    public void setIdOriginal(String idOriginal) { this.idOriginal = idOriginal; }
-    public String getQuantidadeOriginal() { return quantidadeOriginal; }
-    public void setQuantidadeOriginal(String quantidadeOriginal) { this.quantidadeOriginal = quantidadeOriginal; }
-    public Produto getProduto() { return produto; }
-    public void setProduto(Produto produto) { this.produto = produto; }
-    public Integer getQuantidadeAtual() { return quantidadeAtual; }
-    public void setQuantidadeAtual(Integer quantidadeAtual) { this.quantidadeAtual = quantidadeAtual; }
-    public StatusImportacaoLinhaEnum getStatus() { return status; }
-    public void setStatus(StatusImportacaoLinhaEnum status) { this.status = status; }
-    public String getErroCodigo() { return erroCodigo; }
-    public void setErroCodigo(String erroCodigo) { this.erroCodigo = erroCodigo; }
-    public String getErroMensagem() { return erroMensagem; }
-    public void setErroMensagem(String erroMensagem) { this.erroMensagem = erroMensagem; }
-    public LocalDateTime getProcessadoEm() { return processadoEm; }
-    public void setProcessadoEm(LocalDateTime processadoEm) { this.processadoEm = processadoEm; }
-    public Long getVersao() { return versao; }
-    public void setVersao(Long versao) { this.versao = versao; }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long valor) {
+        this.id = valor;
+    }
+
+    public Importacao getImportacao() {
+        return importacao;
+    }
+
+    public void setImportacao(Importacao valor) {
+        this.importacao = valor;
+    }
+
+    public Integer getNumeroLinha() {
+        return numeroLinha;
+    }
+
+    public void setNumeroLinha(Integer valor) {
+        this.numeroLinha = valor;
+    }
+
+    public String getNomeAtual() {
+        return nomeAtual;
+    }
+
+    public void setNomeAtual(String valor) {
+        this.nomeAtual = valor;
+    }
+
+    public Produto getProduto() {
+        return produto;
+    }
+
+    public void setProduto(Produto valor) {
+        this.produto = valor;
+    }
+
+    public Integer getQuantidadeAtual() {
+        return quantidadeAtual;
+    }
+
+    public void setQuantidadeAtual(Integer valor) {
+        this.quantidadeAtual = valor;
+    }
+
+    public StatusImportacaoLinhaEnum getStatus() {
+        return status;
+    }
+
+    public void setStatus(StatusImportacaoLinhaEnum valor) {
+        this.status = valor;
+    }
+
+    public String getErroCodigo() {
+        return erroCodigo;
+    }
+
+    public void setErroCodigo(String valor) {
+        this.erroCodigo = valor;
+    }
+
+    public String getErroMensagem() {
+        return erroMensagem;
+    }
+
+    public void setErroMensagem(String valor) {
+        this.erroMensagem = valor;
+    }
+
+    public LocalDateTime getProcessadoEm() {
+        return processadoEm;
+    }
+
+    public void setProcessadoEm(LocalDateTime valor) {
+        this.processadoEm = valor;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime valor) {
+        this.updatedAt = valor;
+    }
+
+    public Long getVersao() {
+        return versao;
+    }
+
+    public void setVersao(Long valor) {
+        this.versao = valor;
+    }
+
+    public void atualizarPrevia() {
+        updatedAt = LocalDateTime.now();
+    }
 }

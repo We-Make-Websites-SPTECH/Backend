@@ -5,6 +5,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(code = HttpStatus.BAD_REQUEST)
 public class EstoqueInvalidoException extends RuntimeException {
+    public EstoqueInvalidoException() {
+        this("Dados de estoque inválidos.");
+    }
+
     public EstoqueInvalidoException(String mensagem) {
         super(mensagem);
     }

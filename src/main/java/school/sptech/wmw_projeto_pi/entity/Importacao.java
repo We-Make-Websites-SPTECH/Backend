@@ -1,40 +1,100 @@
 package school.sptech.wmw_projeto_pi.entity;
 
 import jakarta.persistence.*;
-import java.time.*;
-import java.math.BigDecimal;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import school.sptech.wmw_projeto_pi.enums.OrigemRegistroEnum;
+import school.sptech.wmw_projeto_pi.enums.StatusImportacaoEnum;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name="importacao")
+@Table(name = "importacao")
 public class Importacao {
-    @Id @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column
+
+    @Size(max = 255)
     private String nomeArquivo;
-    @Column(columnDefinition="MEDIUMTEXT")
-    private String conteudoOriginal;
-    @Column(nullable=false)
+
+    @NotNull
+    @Column(nullable = false)
     private LocalDate dataReferencia;
-    @Column(nullable=false)
-    private LocalDateTime criadoEm;
-    @ManyToOne @JoinColumn(name="usuario_id",nullable=false)
+
+    @NotNull
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @NotNull
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
+
+    @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(nullable=false, length=16)
+    @Column(nullable = false, length = 16)
     private OrigemRegistroEnum origem = OrigemRegistroEnum.TXT;
-    public OrigemRegistroEnum getOrigem() { return origem; }
-    public void setOrigem(OrigemRegistroEnum origem) { this.origem = origem; }
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getNomeArquivo() { return nomeArquivo; }
-    public void setNomeArquivo(String nomeArquivo) { this.nomeArquivo = nomeArquivo; }
-    public String getConteudoOriginal() { return conteudoOriginal; }
-    public void setConteudoOriginal(String conteudoOriginal) { this.conteudoOriginal = conteudoOriginal; }
-    public LocalDate getDataReferencia() { return dataReferencia; }
-    public void setDataReferencia(LocalDate dataReferencia) { this.dataReferencia = dataReferencia; }
-    public LocalDateTime getCriadoEm() { return criadoEm; }
-    public void setCriadoEm(LocalDateTime criadoEm) { this.criadoEm = criadoEm; }
-    public Usuario getUsuario() { return usuario; }
-    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private StatusImportacaoEnum status = StatusImportacaoEnum.PREVIA;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long valor) {
+        this.id = valor;
+    }
+
+    public String getNomeArquivo() {
+        return nomeArquivo;
+    }
+
+    public void setNomeArquivo(String valor) {
+        this.nomeArquivo = valor;
+    }
+
+    public LocalDate getDataReferencia() {
+        return dataReferencia;
+    }
+
+    public void setDataReferencia(LocalDate valor) {
+        this.dataReferencia = valor;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime valor) {
+        this.createdAt = valor;
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(Usuario valor) {
+        this.usuario = valor;
+    }
+
+    public OrigemRegistroEnum getOrigem() {
+        return origem;
+    }
+
+    public void setOrigem(OrigemRegistroEnum valor) {
+        this.origem = valor;
+    }
+
+    public StatusImportacaoEnum getStatus() {
+        return status;
+    }
+
+    public void setStatus(StatusImportacaoEnum valor) {
+        this.status = valor;
+    }
 }
