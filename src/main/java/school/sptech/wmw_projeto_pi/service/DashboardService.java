@@ -75,7 +75,8 @@ public class DashboardService {
 
             BigDecimal delta;
             if (movimentacao.tipo() == TipoMovimentacaoEnum.SAIDA
-                    && movimentacao.motivo() == MotivoMovimentacaoEnum.VENDA) {
+                    && (movimentacao.motivo() == MotivoMovimentacaoEnum.VENDA
+                    || movimentacao.motivo() == MotivoMovimentacaoEnum.CONSUMO_PRODUTO)) {
                 delta = movimentacao.quantidade();
             } else if (movimentacao.tipo() == TipoMovimentacaoEnum.ENTRADA
                     && movimentacao.motivo() == MotivoMovimentacaoEnum.CANCELAMENTO_VENDA) {

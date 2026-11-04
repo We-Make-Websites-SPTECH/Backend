@@ -1,4 +1,6 @@
--- WMW | schema.sql para MySQL
+-- WMW | schema.sql completo para MySQL 8.0.16+ / InnoDB
+-- Preserva as tabelas existentes e incorpora a importacao TXT/manual atual.
+-- Execute em um banco vazio. Este arquivo nao apaga bancos ou tabelas.
 -- updated_at: valor inicial preenchido no banco; atualizações posteriores
 -- devem ser feitas pelo backend (ex.: @PreUpdate).
 
@@ -11,7 +13,7 @@ CREATE TABLE cargo (
                        descricao VARCHAR(255) NULL,
                        PRIMARY KEY (id),
                        CONSTRAINT uq_cargo_nome UNIQUE (nome)
-);
+) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
 -- 2. PERMISSAO
@@ -24,7 +26,7 @@ CREATE TABLE permissao (
                            descricao VARCHAR(255) NOT NULL,
                            PRIMARY KEY (id),
                            CONSTRAINT uq_permissao_codigo UNIQUE (codigo)
-);
+) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
 -- 3. USUARIO
@@ -47,7 +49,7 @@ CREATE TABLE usuario (
                          CONSTRAINT uq_usuario_email UNIQUE (email),
                          CONSTRAINT fk_usuario_created_by FOREIGN KEY (created_by) REFERENCES usuario (id),
                          CONSTRAINT fk_usuario_updated_by FOREIGN KEY (updated_by) REFERENCES usuario (id)
-);
+) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
 -- 4. PERMISSAO_CARGO
@@ -63,7 +65,7 @@ CREATE TABLE permissao_cargo (
                                  CONSTRAINT fk_permissao_cargo_permissao FOREIGN KEY (permissao_id) REFERENCES permissao (id),
                                  CONSTRAINT fk_permissao_cargo_cargo FOREIGN KEY (cargo_id) REFERENCES cargo (id),
                                  CONSTRAINT fk_permissao_cargo_criado FOREIGN KEY (created_by) REFERENCES usuario (id)
-);
+) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
 -- 5. INSUMO
@@ -83,7 +85,7 @@ CREATE TABLE insumo (
                         CONSTRAINT uq_insumo_nome UNIQUE (nome),
                         CONSTRAINT fk_insumo_created_by FOREIGN KEY (created_by) REFERENCES usuario (id),
                         CONSTRAINT fk_insumo_updated_by FOREIGN KEY (updated_by) REFERENCES usuario (id)
-);
+) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
 -- 6. PRODUTO
@@ -102,7 +104,7 @@ CREATE TABLE produto (
                          CONSTRAINT uq_produto_nome_tamanho UNIQUE (nome, tamanho),
                          CONSTRAINT fk_produto_created_by FOREIGN KEY (created_by) REFERENCES usuario (id),
                          CONSTRAINT fk_produto_updated_by FOREIGN KEY (updated_by) REFERENCES usuario (id)
-);
+) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
 -- 7. PRODUTO_INSUMO (receita padrão)
@@ -126,7 +128,7 @@ CREATE TABLE produto_insumo (
                                 CONSTRAINT fk_produto_insumo_insumo FOREIGN KEY (insumo_id) REFERENCES insumo (id),
                                 CONSTRAINT fk_produto_insumo_created_by FOREIGN KEY (created_by) REFERENCES usuario (id),
                                 CONSTRAINT fk_produto_insumo_updated_by FOREIGN KEY (updated_by) REFERENCES usuario (id)
-);
+) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
 -- 8. PRODUTO_INSUMO_HISTORICO (log de eventos, append-only)
@@ -147,7 +149,7 @@ CREATE TABLE produto_insumo_historico (
                                           CONSTRAINT fk_pih_produto FOREIGN KEY (produto_id) REFERENCES produto (id),
                                           CONSTRAINT fk_pih_insumo FOREIGN KEY (insumo_id) REFERENCES insumo (id),
                                           CONSTRAINT fk_pih_usuario FOREIGN KEY (usuario_id) REFERENCES usuario (id)
-);
+) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
 -- 9. VENDA
@@ -164,7 +166,7 @@ CREATE TABLE venda (
                        PRIMARY KEY (id),
                        CONSTRAINT fk_venda_created_by FOREIGN KEY (created_by) REFERENCES usuario (id),
                        CONSTRAINT fk_venda_updated_by FOREIGN KEY (updated_by) REFERENCES usuario (id)
-);
+) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
 -- 10. ITEM_VENDA
@@ -178,7 +180,7 @@ CREATE TABLE item_venda (
                             CONSTRAINT chk_item_venda_qtd CHECK (quantidade > 0),
                             CONSTRAINT fk_item_venda_venda FOREIGN KEY (venda_id) REFERENCES venda (id),
                             CONSTRAINT fk_item_venda_produto FOREIGN KEY (produto_id) REFERENCES produto (id)
-);
+) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
 -- 11. ITEM_VENDA_INSUMO
@@ -204,32 +206,92 @@ CREATE TABLE item_venda_insumo (
                                    CONSTRAINT fk_ivi_insumo FOREIGN KEY (insumo_id) REFERENCES insumo (id),
                                    CONSTRAINT fk_ivi_created_by FOREIGN KEY (created_by) REFERENCES usuario (id),
                                    CONSTRAINT fk_ivi_updated_by FOREIGN KEY (updated_by) REFERENCES usuario (id)
-);
+) ENGINE=InnoDB;
+
+-- Importacao TXT e registro manual: modelagem atual do backend.
+CREATE TABLE importacao (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    origem VARCHAR(16) NOT NULL DEFAULT 'TXT' CHECK (origem IN ('TXT','MANUAL')),
+    nome_arquivo VARCHAR(255) NULL,
+    data_referencia DATE NOT NULL,
+    created_at DATETIME(6) NOT NULL,
+    usuario_id INT NOT NULL,
+    status VARCHAR(16) NOT NULL DEFAULT 'PREVIA',
+    CONSTRAINT chk_importacao_status CHECK (status IN ('PREVIA','PROCESSANDO','CONCLUIDO')),
+    CONSTRAINT fk_importacao_usuario FOREIGN KEY (usuario_id) REFERENCES usuario (id)
+) ENGINE=InnoDB;
+
+CREATE TABLE importacao_linha (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    importacao_id BIGINT NOT NULL,
+    numero_linha INT NOT NULL,
+    nome_atual VARCHAR(255) NULL,
+    produto_id INT NULL,
+    quantidade_atual INT NULL,
+    status VARCHAR(32) NOT NULL,
+    erro_codigo VARCHAR(60) NULL,
+    erro_mensagem VARCHAR(255) NULL,
+    processado_em DATETIME(6) NULL,
+    updated_at DATETIME(6) NULL,
+    CONSTRAINT uq_il_numero UNIQUE (importacao_id, numero_linha),
+    CONSTRAINT chk_il_numero CHECK (numero_linha > 0),
+    CONSTRAINT chk_il_status CHECK (status IN ('INVALIDA','PENDENTE','PROCESSADA')),
+    CONSTRAINT fk_il_importacao FOREIGN KEY (importacao_id) REFERENCES importacao (id),
+    CONSTRAINT fk_il_produto FOREIGN KEY (produto_id) REFERENCES produto (id)
+) ENGINE=InnoDB;
+
+CREATE TABLE importacao_linha_consumo (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    linha_id BIGINT NOT NULL,
+    insumo_id INT NOT NULL,
+    quantidade_prevista DECIMAL(12,3) NOT NULL,
+    quantidade_efetivada DECIMAL(12,3) NULL,
+    aviso VARCHAR(255) NULL,
+    CONSTRAINT uq_ilc_linha_insumo UNIQUE (linha_id, insumo_id),
+    CONSTRAINT uq_ilc_id_insumo UNIQUE (id, insumo_id),
+    CONSTRAINT chk_ilc_prevista CHECK (quantidade_prevista > 0),
+    CONSTRAINT chk_ilc_efetivada CHECK (
+        quantidade_efetivada IS NULL OR
+        (quantidade_efetivada >= 0 AND quantidade_efetivada <= quantidade_prevista)
+    ),
+    CONSTRAINT fk_ilc_linha FOREIGN KEY (linha_id) REFERENCES importacao_linha (id),
+    CONSTRAINT fk_ilc_insumo FOREIGN KEY (insumo_id) REFERENCES insumo (id)
+) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
 -- 12. MOVIMENTACAO_ESTOQUE (ledger append-only: entrada, saída, qualquer motivo)
 -- ---------------------------------------------------------------------
 CREATE TABLE movimentacao_estoque (
-                                      id BIGINT AUTO_INCREMENT,
-                                      insumo_id INT NOT NULL,
-                                      item_venda_insumo_id INT NULL,
-                                      usuario_id INT NOT NULL,
-                                      tipo VARCHAR(32) NOT NULL CHECK (tipo IN ('ENTRADA','SAIDA')),
-                                      motivo VARCHAR(32) NOT NULL CHECK (motivo IN ('VENDA','COMPRA','QUEBRA','AJUSTE','OUTRO','CANCELAMENTO_VENDA')),
-                                      quantidade DECIMAL(12,3) NOT NULL,
-                                      observacao VARCHAR(255) NULL,
-                                      data_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                      PRIMARY KEY (id),
-                                      CONSTRAINT uq_mov_item_venda_insumo_tipo UNIQUE (item_venda_insumo_id, tipo),
-                                      CONSTRAINT chk_mov_qtd_positiva CHECK (quantidade > 0),
-                                      CONSTRAINT chk_mov_venda_consistente CHECK (
-                                          (motivo IN ('VENDA', 'CANCELAMENTO_VENDA') AND item_venda_insumo_id IS NOT NULL) OR
-                                          (motivo NOT IN ('VENDA', 'CANCELAMENTO_VENDA') AND item_venda_insumo_id IS NULL)
-                                          ),
-                                      CONSTRAINT fk_mov_insumo FOREIGN KEY (insumo_id) REFERENCES insumo (id),
-                                      CONSTRAINT fk_mov_item_venda_insumo FOREIGN KEY (item_venda_insumo_id) REFERENCES item_venda_insumo (id),
-                                      CONSTRAINT fk_mov_usuario FOREIGN KEY (usuario_id) REFERENCES usuario (id)
-);
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    insumo_id INT NOT NULL,
+    item_venda_insumo_id INT NULL,
+    importacao_linha_consumo_id BIGINT NULL,
+    usuario_id INT NOT NULL,
+    tipo VARCHAR(32) NOT NULL CHECK (tipo IN ('ENTRADA','SAIDA')),
+    motivo VARCHAR(32) NOT NULL CHECK (
+        motivo IN ('VENDA','COMPRA','QUEBRA','AJUSTE','OUTRO','CANCELAMENTO_VENDA','CONSUMO_PRODUTO')
+    ),
+    quantidade DECIMAL(12,3) NOT NULL,
+    observacao VARCHAR(255) NULL,
+    data_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_mov_item_venda_insumo_tipo UNIQUE (item_venda_insumo_id, tipo),
+    CONSTRAINT chk_mov_quantidade CHECK (quantidade > 0),
+    CONSTRAINT chk_mov_consumo CHECK (
+        (motivo = 'CONSUMO_PRODUTO' AND tipo = 'SAIDA' AND importacao_linha_consumo_id IS NOT NULL)
+        OR (motivo <> 'CONSUMO_PRODUTO' AND importacao_linha_consumo_id IS NULL)
+    ),
+    CONSTRAINT uq_mov_consumo_tipo UNIQUE (importacao_linha_consumo_id, tipo),
+    CONSTRAINT fk_mov_consumo_insumo FOREIGN KEY (importacao_linha_consumo_id, insumo_id)
+        REFERENCES importacao_linha_consumo (id, insumo_id),
+    CONSTRAINT chk_mov_venda_consistente CHECK (
+        (motivo IN ('VENDA', 'CANCELAMENTO_VENDA') AND item_venda_insumo_id IS NOT NULL)
+        OR (motivo NOT IN ('VENDA', 'CANCELAMENTO_VENDA') AND item_venda_insumo_id IS NULL)
+    ),
+    CONSTRAINT fk_mov_item_venda_insumo FOREIGN KEY (item_venda_insumo_id)
+        REFERENCES item_venda_insumo (id),
+    CONSTRAINT fk_mov_insumo FOREIGN KEY (insumo_id) REFERENCES insumo (id),
+    CONSTRAINT fk_mov_usuario FOREIGN KEY (usuario_id) REFERENCES usuario (id)
+) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
 -- 13. USUARIO_CARGO (novo na v03)
@@ -249,7 +311,7 @@ CREATE TABLE usuario_cargo (
                                CONSTRAINT fk_usuario_cargo_usuario FOREIGN KEY (usuario_id) REFERENCES usuario (id),
                                CONSTRAINT fk_usuario_cargo_cargo FOREIGN KEY (cargo_id) REFERENCES cargo (id),
                                CONSTRAINT fk_usuario_cargo_criado FOREIGN KEY (created_by) REFERENCES usuario (id)
-);
+) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
 -- 14. ALERTA_ESTOQUE_BAIXO (novo na v03)
@@ -272,7 +334,7 @@ CREATE TABLE alerta_estoque_baixo (
                                       CONSTRAINT chk_alerta_qtd_minima CHECK (quantidade_minima >= 0),
                                       CONSTRAINT fk_alerta_cargo FOREIGN KEY (cargo_id) REFERENCES cargo (id),
                                       CONSTRAINT fk_alerta_insumo FOREIGN KEY (insumo_id) REFERENCES insumo (id)
-);
+) ENGINE=InnoDB;
 
 -- Índices secundários
 CREATE INDEX idx_permissao_cargo_cargo ON permissao_cargo (cargo_id);
@@ -289,3 +351,6 @@ CREATE INDEX idx_mov_usuario_data ON movimentacao_estoque (usuario_id, data_hora
 CREATE INDEX idx_mov_item_venda_insumo ON movimentacao_estoque (item_venda_insumo_id);
 CREATE INDEX idx_usuario_cargo_cargo ON usuario_cargo (cargo_id);
 CREATE INDEX idx_alerta_insumo ON alerta_estoque_baixo (insumo_id);
+
+CREATE INDEX idx_importacao_historico ON importacao (status, id);
+CREATE INDEX idx_il_resultado ON importacao_linha (importacao_id, status);

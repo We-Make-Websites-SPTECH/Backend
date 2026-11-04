@@ -22,27 +22,28 @@ public class EstoqueController {
     @PostMapping("/entradas")
     public ResponseEntity<MovimentacaoEstoqueResponseDto> registrarEntrada(
             @Valid @RequestBody EntradaEstoqueRequestDto request,
-            @RequestHeader("Usuario-Id") Integer usuarioId) {
+            @RequestHeader("Usuario-Id") Integer usuarioId)
+    {
         MovimentacaoEstoqueResponseDto resposta = estoqueService.registrarEntrada(
-                request.getInsumoId(), request.getQuantidadeBruta(), request.getMotivo(),
-                request.getObservacao(), usuarioId);
+                request.getInsumoId(), request.getQuantidadeBruta(), request.getMotivo(), request.getObservacao(), usuarioId);
         return ResponseEntity.status(201).body(resposta);
     }
 
     @PostMapping("/saidas")
     public ResponseEntity<MovimentacaoEstoqueResponseDto> registrarSaida(
             @Valid @RequestBody SaidaEstoqueRequestDto request,
-            @RequestHeader("Usuario-Id") Integer usuarioId) {
+            @RequestHeader("Usuario-Id") Integer usuarioId)
+    {
         MovimentacaoEstoqueResponseDto resposta = estoqueService.registrarSaida(
-                request.getInsumoId(), request.getQuantidade(), request.getMotivo(),
-                request.getObservacao(), usuarioId);
-        return ResponseEntity.status(resposta.getId() == null ? 200 : 201).body(resposta);
+                request.getInsumoId(), request.getQuantidade(), request.getMotivo(), request.getObservacao(), usuarioId);
+        return ResponseEntity.status(201).body(resposta);
     }
 
     @PostMapping("/ajustes")
     public ResponseEntity<MovimentacaoEstoqueResponseDto> ajustarSaldo(
             @Valid @RequestBody AjusteEstoqueRequestDto request,
-            @RequestHeader("Usuario-Id") Integer usuarioId) {
+            @RequestHeader("Usuario-Id") Integer usuarioId)
+    {
         MovimentacaoEstoqueResponseDto resposta = estoqueService.ajustarSaldo(
                 request.getInsumoId(), request.getNovoSaldo(), request.getObservacao(), usuarioId);
         return ResponseEntity.status(201).body(resposta);
