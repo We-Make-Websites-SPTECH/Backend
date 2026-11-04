@@ -8,6 +8,7 @@ import school.sptech.wmw_projeto_pi.entity.Produto;
 import school.sptech.wmw_projeto_pi.entity.ProdutoInsumo;
 import school.sptech.wmw_projeto_pi.entity.Usuario;
 import school.sptech.wmw_projeto_pi.exception.InsumoNotFoundException;
+import school.sptech.wmw_projeto_pi.exception.InsumoDesativadoException;
 import school.sptech.wmw_projeto_pi.exception.ProductNotFoundException;
 import school.sptech.wmw_projeto_pi.exception.ReceitaNotFoundException;
 import school.sptech.wmw_projeto_pi.exception.UserNotFoundException;
@@ -122,6 +123,10 @@ public class ProdutoInsumoService {
 
         List<ProdutoInsumoItemRequestDto> ingredientesNovos = new ArrayList<>(receitaRequest.getIngredientes());
 
+        for (ProdutoInsumoItemRequestDto ingrediente : ingredientesNovos) {
+            validarInsumo(ingrediente.getInsumoId());
+        }
+
         for (ProdutoInsumo ingredienteAtual : ingredientesAtuais) {
             boolean encontrado = false;
 
@@ -176,7 +181,16 @@ public class ProdutoInsumoService {
     }
 
     public void validarInsumo(Integer insumoId) {
-        if (!insumoRepository.existsById(insumoId)) throw new InsumoNotFoundException();
+        Optional<Insumo> insumoOptional = insumoRepository.findInsumoById(insumoId);
+
+        if (insumoOptional.isEmpty()) {
+            throw new InsumoNotFoundException();
+        }
+
+        Insumo insumo = insumoOptional.get();
+        if (!Boolean.TRUE.equals(insumo.getAtivo())) {
+            throw new InsumoDesativadoException();
+        }
     }
 
 }

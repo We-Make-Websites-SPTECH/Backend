@@ -269,13 +269,16 @@ CREATE TABLE movimentacao_estoque (
     usuario_id INT NOT NULL,
     tipo VARCHAR(32) NOT NULL CHECK (tipo IN ('ENTRADA','SAIDA')),
     motivo VARCHAR(32) NOT NULL CHECK (
-        motivo IN ('VENDA','COMPRA','QUEBRA','AJUSTE','OUTRO','CANCELAMENTO_VENDA','CONSUMO_PRODUTO')
+        motivo IN ('VENDA','COMPRA','QUEBRA','AJUSTE','OUTRO','CANCELAMENTO_VENDA','CONSUMO_PRODUTO','SALDO_INICIAL')
     ),
     quantidade DECIMAL(12,3) NOT NULL,
     observacao VARCHAR(255) NULL,
     data_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_mov_item_venda_insumo_tipo UNIQUE (item_venda_insumo_id, tipo),
-    CONSTRAINT chk_mov_quantidade CHECK (quantidade > 0),
+    CONSTRAINT chk_mov_quantidade CHECK (
+        quantidade > 0 OR (quantidade = 0 AND motivo = 'SALDO_INICIAL' AND tipo = 'ENTRADA')
+    ),
+    CONSTRAINT chk_mov_saldo_inicial CHECK (motivo <> 'SALDO_INICIAL' OR tipo = 'ENTRADA'),
     CONSTRAINT chk_mov_consumo CHECK (
         (motivo = 'CONSUMO_PRODUTO' AND tipo = 'SAIDA' AND importacao_linha_consumo_id IS NOT NULL)
         OR (motivo <> 'CONSUMO_PRODUTO' AND importacao_linha_consumo_id IS NULL)

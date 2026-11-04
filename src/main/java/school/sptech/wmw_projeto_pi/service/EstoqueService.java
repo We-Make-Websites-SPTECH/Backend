@@ -8,15 +8,14 @@ import school.sptech.wmw_projeto_pi.entity.ImportacaoLinhaConsumo;
 import school.sptech.wmw_projeto_pi.entity.MovimentacaoEstoque;
 import school.sptech.wmw_projeto_pi.entity.Usuario;
 import school.sptech.wmw_projeto_pi.enums.MotivoMovimentacaoEnum;
-import school.sptech.wmw_projeto_pi.enums.TipoMovimentacaoEnum;
 import school.sptech.wmw_projeto_pi.exception.AjusteSemDiferencaException;
 import school.sptech.wmw_projeto_pi.exception.EstoqueInvalidoException;
 import school.sptech.wmw_projeto_pi.exception.EstoqueSemSaldoException;
 import school.sptech.wmw_projeto_pi.exception.InsumoNotFoundException;
+import school.sptech.wmw_projeto_pi.exception.InsumoDesativadoException;
 import school.sptech.wmw_projeto_pi.exception.UserNotFoundException;
 import school.sptech.wmw_projeto_pi.mapper.MovimentacaoEstoqueMapper;
 import school.sptech.wmw_projeto_pi.repository.InsumoRepository;
-import school.sptech.wmw_projeto_pi.repository.MovimentacaoEstoqueRepository;
 import school.sptech.wmw_projeto_pi.repository.UsuarioRepository;
 
 import java.math.BigDecimal;
@@ -25,16 +24,16 @@ import java.util.Optional;
 @Service
 public class EstoqueService {
     private final InsumoRepository insumoRepository;
-    private final MovimentacaoEstoqueRepository movimentacaoEstoqueRepository;
+    private final MovimentacaoEstoqueService movimentacaoEstoqueService;
     private final UsuarioRepository usuarioRepository;
     private final BigDecimal quantidadeMaximaEstoque = new BigDecimal("999999999.999");
 
     public EstoqueService(
             InsumoRepository insumoRepository,
-            MovimentacaoEstoqueRepository movimentacaoEstoqueRepository,
+            MovimentacaoEstoqueService movimentacaoEstoqueService,
             UsuarioRepository usuarioRepository) {
         this.insumoRepository = insumoRepository;
-        this.movimentacaoEstoqueRepository = movimentacaoEstoqueRepository;
+        this.movimentacaoEstoqueService = movimentacaoEstoqueService;
         this.usuarioRepository = usuarioRepository;
     }
 
@@ -87,6 +86,7 @@ public class EstoqueService {
         }
 
         if (motivo == MotivoMovimentacaoEnum.CONSUMO_PRODUTO
+                || motivo == MotivoMovimentacaoEnum.SALDO_INICIAL
                 || motivo == MotivoMovimentacaoEnum.VENDA
                 || motivo == MotivoMovimentacaoEnum.CANCELAMENTO_VENDA) {
             throw new EstoqueInvalidoException(
@@ -216,24 +216,9 @@ public class EstoqueService {
             throw new EstoqueInvalidoException("Uma movimentação deve ter quantidade maior que zero.");
         }
 
-        MovimentacaoEstoque movimentacao = new MovimentacaoEstoque();
-        movimentacao.setConsumoImportacao(consumo);
-        movimentacao.setInsumo(insumo);
-        movimentacao.setUsuario(usuario);
-        movimentacao.setMotivo(motivo);
-        movimentacao.setQuantidade(quantidadeMovimentacao);
-        movimentacao.setObservacao(observacao);
-
-        if (variacaoSaldo.compareTo(BigDecimal.ZERO) > 0) {
-            movimentacao.setTipo(TipoMovimentacaoEnum.ENTRADA);
-        } else {
-            movimentacao.setTipo(TipoMovimentacaoEnum.SAIDA);
-        }
-
-        insumo.setQuantidadeAtual(novoSaldo);
-        insumo.setUpdatedBy(usuario);
-        insumoRepository.save(insumo);
-        movimentacaoEstoqueRepository.save(movimentacao);
+        MovimentacaoEstoque movimentacao = movimentacaoEstoqueService.registrar(
+                insumo.getId(), usuario, variacaoSaldo, motivo, observacao, consumo
+        );
 
         return MovimentacaoEstoqueMapper.toResponseDto(movimentacao);
     }
@@ -249,7 +234,13 @@ public class EstoqueService {
             throw new InsumoNotFoundException();
         }
 
-        return insumo.get();
+        Insumo insumoEncontrado = insumo.get();
+
+        if (!Boolean.TRUE.equals(insumoEncontrado.getAtivo())) {
+            throw new InsumoDesativadoException();
+        }
+
+        return insumoEncontrado;
     }
 
     private Usuario buscarUsuario(Integer usuarioId) {
