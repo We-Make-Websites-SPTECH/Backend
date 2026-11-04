@@ -2,7 +2,7 @@ package school.sptech.wmw_projeto_pi.dto.produto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import school.sptech.wmw_projeto_pi.enums.TamanhoEnum;
+import school.sptech.wmw_projeto_pi.enums.TipoProdutoEnum;
 
 public class ProdutoRequestDtoUpdate {
 
@@ -13,14 +13,18 @@ public class ProdutoRequestDtoUpdate {
     private Boolean ativo;
 
     @NotNull
-    private TamanhoEnum tamanho;
+    private TipoProdutoEnum tipo;
+
+    @NotNull
+    private Integer tamanho;
 
     public ProdutoRequestDtoUpdate() {
     }
 
-    public ProdutoRequestDtoUpdate(String nome, Boolean ativo, TamanhoEnum tamanho) {
+    public ProdutoRequestDtoUpdate(String nome, Boolean ativo, TipoProdutoEnum tipo, Integer tamanho) {
         this.nome = nome;
         this.ativo = ativo;
+        this.tipo = tipo;
         this.tamanho = tamanho;
     }
 
@@ -40,11 +44,19 @@ public class ProdutoRequestDtoUpdate {
         this.ativo = ativo;
     }
 
-    public TamanhoEnum getTamanho() {
+    public TipoProdutoEnum getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(TipoProdutoEnum tipo) {
+        this.tipo = tipo;
+    }
+
+    public Integer getTamanho() {
         return tamanho;
     }
 
-    public void setTamanho(TamanhoEnum tamanho) {
+    public void setTamanho(Integer tamanho) {
         this.tamanho = tamanho;
     }
 }

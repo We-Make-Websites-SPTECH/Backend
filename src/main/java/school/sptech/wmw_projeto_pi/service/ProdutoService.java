@@ -59,7 +59,6 @@ public class ProdutoService {
 
 
 
-    // AUXILIARES
 
     public Usuario findUser(Integer id) {
         Optional<Usuario> usuarioOptional = usuarioRepository.findById(id);

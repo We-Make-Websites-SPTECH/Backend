@@ -9,11 +9,13 @@ import school.sptech.wmw_projeto_pi.dto.produto.ProdutoResponseDtoGetAll;
 import school.sptech.wmw_projeto_pi.entity.Produto;
 import school.sptech.wmw_projeto_pi.mapper.ProdutoMapper;
 import school.sptech.wmw_projeto_pi.service.ProdutoService;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/produto")
+@CrossOrigin(origins = "http://localhost:5173")
 
 public class ProdutoController {
     private final ProdutoService produtoService;
@@ -37,7 +39,6 @@ public class ProdutoController {
 
     @PostMapping
     public ResponseEntity<ProdutoResponseDtoGetAll> create(@Valid @RequestBody ProdutoRequestDtoCreate produtoRequestDto, @RequestHeader("Usuario-Id") Integer idUsuario) {
-        // preciso que o front envie o id do usuario pelo header da req. axios enquanto nao tem jwt
 
         Produto produto = ProdutoMapper.toEntityCreate(produtoRequestDto);
         Produto produtoCadastrado = produtoService.create(produto, idUsuario);

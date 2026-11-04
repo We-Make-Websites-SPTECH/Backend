@@ -1,15 +1,15 @@
 package school.sptech.wmw_projeto_pi.dto.produto;
 
-import school.sptech.wmw_projeto_pi.enums.TamanhoEnum;
-
 
 import java.time.LocalDateTime;
+import school.sptech.wmw_projeto_pi.enums.TipoProdutoEnum;
 
 public class ProdutoResponseDtoGetAll {
     private Integer id;
     private String nome;
     private Boolean ativo;
-    private TamanhoEnum tamanho;
+    private TipoProdutoEnum tipo;
+    private Integer tamanho;
     private LocalDateTime createdAt;
     private ProdutoUsuarioResponseDto createdBy;
     private LocalDateTime updatedAt;
@@ -18,10 +18,11 @@ public class ProdutoResponseDtoGetAll {
     public ProdutoResponseDtoGetAll() {
     }
 
-    public ProdutoResponseDtoGetAll(Integer id, String nome, Boolean ativo, TamanhoEnum tamanho, LocalDateTime createdAt, ProdutoUsuarioResponseDto createdBy, LocalDateTime updatedAt, ProdutoUsuarioResponseDto updatedBy) {
+    public ProdutoResponseDtoGetAll(Integer id, String nome, Boolean ativo, TipoProdutoEnum tipo, Integer tamanho, LocalDateTime createdAt, ProdutoUsuarioResponseDto createdBy, LocalDateTime updatedAt, ProdutoUsuarioResponseDto updatedBy) {
         this.id = id;
         this.nome = nome;
         this.ativo = ativo;
+        this.tipo = tipo;
         this.tamanho = tamanho;
         this.createdAt = createdAt;
         this.createdBy = createdBy;
@@ -53,11 +54,19 @@ public class ProdutoResponseDtoGetAll {
         this.ativo = ativo;
     }
 
-    public TamanhoEnum getTamanho() {
+    public TipoProdutoEnum getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(TipoProdutoEnum tipo) {
+        this.tipo = tipo;
+    }
+
+    public Integer getTamanho() {
         return tamanho;
     }
 
-    public void setTamanho(TamanhoEnum tamanho) {
+    public void setTamanho(Integer tamanho) {
         this.tamanho = tamanho;
     }
 

@@ -1,11 +1,15 @@
 package school.sptech.wmw_projeto_pi.exception;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
-public class CredenciaisInvalidasException extends ResponseStatusException {
-
+@ResponseStatus(code = HttpStatus.UNAUTHORIZED)
+public class CredenciaisInvalidasException extends RuntimeException {
     public CredenciaisInvalidasException() {
-        super(HttpStatus.UNAUTHORIZED, "E-mail ou senha inválidos.");
+        this("E-mail ou senha inválidos.");
+    }
+
+    public CredenciaisInvalidasException(String mensagem) {
+        super(mensagem);
     }
 }

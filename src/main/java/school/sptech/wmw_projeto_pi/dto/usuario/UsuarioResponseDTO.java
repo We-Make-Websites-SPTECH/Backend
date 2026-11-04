@@ -3,13 +3,13 @@ package school.sptech.wmw_projeto_pi.dto.usuario;
 import school.sptech.wmw_projeto_pi.entity.Usuario;
 
 public class UsuarioResponseDTO {
-    private Integer Id;
+    private Integer id;
     private String nome;
     private String email;
     private Boolean ativo;
 
     public UsuarioResponseDTO(Integer id, String nome, String email, Boolean ativo) {
-        Id = id;
+        this.id = id;
         this.nome = nome;
         this.email = email;
         this.ativo = ativo;
@@ -28,11 +28,11 @@ public class UsuarioResponseDTO {
     }
 
     public Integer getId() {
-        return Id;
+        return id;
     }
 
     public void setId(Integer id) {
-        Id = id;
+        this.id = id;
     }
 
     public String getNome() {

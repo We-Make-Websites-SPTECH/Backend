@@ -6,5 +6,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(code = HttpStatus.NOT_FOUND)
 public class InsumoNotFoundException extends RuntimeException {
     public InsumoNotFoundException() {
+        this("Insumo não encontrado.");
+    }
+
+    public InsumoNotFoundException(String mensagem) {
+        super(mensagem);
     }
 }

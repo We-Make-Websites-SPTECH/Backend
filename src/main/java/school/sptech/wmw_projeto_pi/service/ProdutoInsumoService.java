@@ -8,6 +8,7 @@ import school.sptech.wmw_projeto_pi.entity.Produto;
 import school.sptech.wmw_projeto_pi.entity.ProdutoInsumo;
 import school.sptech.wmw_projeto_pi.entity.Usuario;
 import school.sptech.wmw_projeto_pi.exception.InsumoNotFoundException;
+import school.sptech.wmw_projeto_pi.exception.InsumoDesativadoException;
 import school.sptech.wmw_projeto_pi.exception.ProductNotFoundException;
 import school.sptech.wmw_projeto_pi.exception.ReceitaNotFoundException;
 import school.sptech.wmw_projeto_pi.exception.UserNotFoundException;
@@ -120,10 +121,12 @@ public class ProdutoInsumoService {
         List<ProdutoInsumo> ingredientesParaSalvar = new ArrayList<>();
         List<ProdutoInsumo> ingredientesParaRemover = new ArrayList<>();
 
-        // Copia a lista para identificar quais ingredientes são novos
         List<ProdutoInsumoItemRequestDto> ingredientesNovos = new ArrayList<>(receitaRequest.getIngredientes());
 
-        // Compara os ingredientes atuais com os recebidos
+        for (ProdutoInsumoItemRequestDto ingrediente : ingredientesNovos) {
+            validarInsumo(ingrediente.getInsumoId());
+        }
+
         for (ProdutoInsumo ingredienteAtual : ingredientesAtuais) {
             boolean encontrado = false;
 
@@ -132,13 +135,11 @@ public class ProdutoInsumoService {
 
                 if (ingredienteAtual.getInsumo().getId().equals(ingredienteRequest.getInsumoId())) {
 
-                    // O ingrediente continua na receita: atualiza a quantidade
                     ingredienteAtual.setQuantidade(ingredienteRequest.getQuantidade());
                     ingredienteAtual.setUpdatedBy(usuario);
 
                     ingredientesParaSalvar.add(ingredienteAtual);
 
-                    // Remove da lista temporária para não cadastrá-lo novamente
                     ingredientesNovos.remove(i);
 
                     encontrado = true;
@@ -146,16 +147,13 @@ public class ProdutoInsumoService {
                 }
             }
 
-            // Se não veio na requisição, foi removido da receita
             if (!encontrado) {
                 ingredientesParaRemover.add(ingredienteAtual);
             }
         }
 
-        // Exclui somente as associações removidas da receita
         produtoInsumoRepository.deleteAll(ingredientesParaRemover);
 
-        // Os ingredientes que sobraram na lista são novos
         for (ProdutoInsumoItemRequestDto ingredienteRequest : ingredientesNovos) {
             validarInsumo(ingredienteRequest.getInsumoId());
 
@@ -168,14 +166,12 @@ public class ProdutoInsumoService {
 
         produtoInsumoRepository.saveAll(ingredientesParaSalvar);
 
-        // Busca a composição final para retornar a receita completa
         List<ProdutoInsumo> receitaAtualizada = produtoInsumoRepository.findByProdutoId(produtoId);
 
         return ProdutoInsumoMapper.toReceitaResponseDto(receitaAtualizada);
     }
 
 
-    // VALIDAÇÕES
     public void validarProduto(Integer produtoId) {
         if (!produtoRepository.existsById(produtoId)) throw new ProductNotFoundException();
     }
@@ -185,7 +181,16 @@ public class ProdutoInsumoService {
     }
 
     public void validarInsumo(Integer insumoId) {
-        if (!insumoRepository.existsById(insumoId)) throw new InsumoNotFoundException();
+        Optional<Insumo> insumoOptional = insumoRepository.findInsumoById(insumoId);
+
+        if (insumoOptional.isEmpty()) {
+            throw new InsumoNotFoundException();
+        }
+
+        Insumo insumo = insumoOptional.get();
+        if (!Boolean.TRUE.equals(insumo.getAtivo())) {
+            throw new InsumoDesativadoException();
+        }
     }
 
 }

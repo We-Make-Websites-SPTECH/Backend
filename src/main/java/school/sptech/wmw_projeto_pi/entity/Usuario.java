@@ -10,15 +10,10 @@ public class Usuario {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer Id;
-    //private Cargo cargo;
     private String nome;
     private String email;
     private String senha;
     private Boolean ativo;
-    // private Usuario createdBy;
-    // private LocalDate createdAt;
-    // private Usuario updatedBy;
-    // private Localdate updatedAt;
 
 
     public Usuario() {
