@@ -54,9 +54,6 @@ public class ImportacaoLinha {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Version
-    private Long versao;
-
     public Long getId() {
         return id;
     }
@@ -143,14 +140,6 @@ public class ImportacaoLinha {
 
     public void setUpdatedAt(LocalDateTime valor) {
         this.updatedAt = valor;
-    }
-
-    public Long getVersao() {
-        return versao;
-    }
-
-    public void setVersao(Long valor) {
-        this.versao = valor;
     }
 
     public void atualizarPrevia() {

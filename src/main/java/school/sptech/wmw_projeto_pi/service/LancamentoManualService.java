@@ -2,7 +2,6 @@ package school.sptech.wmw_projeto_pi.service;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import school.sptech.wmw_projeto_pi.dto.importacao.ConsumoPersonalizacaoRequestDto;
@@ -10,6 +9,7 @@ import school.sptech.wmw_projeto_pi.dto.importacao.ConsumoInsumoResponseDto;
 import school.sptech.wmw_projeto_pi.dto.importacao.ConsumoTotalResponseDto;
 import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoConfirmacaoRequestDto;
 import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoLinhaResponseDto;
+import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoResumoResponseDto;
 import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoResultadoResponseDto;
 import school.sptech.wmw_projeto_pi.dto.importacao.LancamentoManualItemRequestDto;
 import school.sptech.wmw_projeto_pi.dto.importacao.LancamentoManualPreviaResponseDto;
@@ -18,116 +18,128 @@ import school.sptech.wmw_projeto_pi.entity.Importacao;
 import school.sptech.wmw_projeto_pi.entity.ImportacaoLinha;
 import school.sptech.wmw_projeto_pi.entity.Usuario;
 import school.sptech.wmw_projeto_pi.enums.OrigemRegistroEnum;
-import school.sptech.wmw_projeto_pi.repository.ImportacaoLinhaRepository;
 import school.sptech.wmw_projeto_pi.repository.ImportacaoRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class LancamentoManualService {
-    private final ImportacaoRepository registros;
-    private final ImportacaoLinhaRepository linhas;
-    private final ProcessamentoConsumoService processamento;
-    private final RegistroConsumoService registrosConsumo;
+    private final ImportacaoRepository registrosRepository;
+    private final ProcessamentoConsumoService processamentoConsumoService;
+    private final RegistroConsumoService registroConsumoService;
 
     public LancamentoManualService(
-            ImportacaoRepository registros,
-            ImportacaoLinhaRepository linhas,
-            ProcessamentoConsumoService processamento,
-            RegistroConsumoService registrosConsumo) {
-        this.registros = registros;
-        this.linhas = linhas;
-        this.processamento = processamento;
-        this.registrosConsumo = registrosConsumo;
+            ImportacaoRepository registrosRepository,
+            ProcessamentoConsumoService processamentoConsumoService,
+            RegistroConsumoService registroConsumoService) {
+        this.registrosRepository = registrosRepository;
+        this.processamentoConsumoService = processamentoConsumoService;
+        this.registroConsumoService = registroConsumoService;
     }
 
-    @Transactional(isolation = Isolation.REPEATABLE_READ)
-    public LancamentoManualPreviaResponseDto preparar(LancamentoManualRequestDto pedido, Integer usuarioId) {
-        Usuario usuario = processamento.buscarUsuario(usuarioId);
+    @Transactional
+    public LancamentoManualPreviaResponseDto preparar(LancamentoManualRequestDto lancamentoRequest, Integer usuarioId) {
+        Usuario usuario = processamentoConsumoService.buscarUsuario(usuarioId);
 
         Importacao registro = new Importacao();
         registro.setOrigem(OrigemRegistroEnum.MANUAL);
-        registro.setDataReferencia(pedido.getDataReferencia());
+        registro.setDataReferencia(lancamentoRequest.getDataReferencia());
         registro.setCreatedAt(LocalDateTime.now());
         registro.setUsuario(usuario);
-        registros.save(registro);
+        registrosRepository.save(registro);
 
-        int numero = 0;
+        Integer numeroLinha = 0;
 
-        for (LancamentoManualItemRequestDto item : pedido.getItens()) {
+        for (LancamentoManualItemRequestDto item : lancamentoRequest.getItens()) {
+            numeroLinha++;
+            Integer quantidade = item.getQuantidade().intValueExact();
+
             ImportacaoLinha linha = new ImportacaoLinha();
             linha.setImportacao(registro);
-            linha.setNumeroLinha(++numero);
+            linha.setNumeroLinha(numeroLinha);
 
-            processamento.prepararManual(linha, item.getProdutoId(), item.getQuantidade().intValueExact());
+            processamentoConsumoService.prepararLinhaManual(
+                    linha, item.getProdutoId(), quantidade
+            );
         }
 
-        linhas.flush();
-        registrosConsumo.exigirValidas(registro.getId());
+        registroConsumoService.validarExistenciaDeLinhasValidas(registro.getId());
 
-        return previa(registro.getId());
+        return montarPrevia(registro.getId());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public LancamentoManualPreviaResponseDto consultar(Long id) {
-        conferirManual(id);
+        validarRegistroManual(id);
 
-        return previa(id);
+        return montarPrevia(id);
     }
 
     public ImportacaoLinhaResponseDto personalizar(
-            Long id, Long linhaId, ConsumoPersonalizacaoRequestDto pedido, Integer usuarioId) {
-        conferirManual(id);
+            Long id, Long linhaId, ConsumoPersonalizacaoRequestDto personalizacaoRequest, Integer usuarioId) {
+        validarRegistroManual(id);
 
-        return processamento.personalizar(id, linhaId, pedido, usuarioId);
+        return processamentoConsumoService.personalizar(id, linhaId, personalizacaoRequest, usuarioId);
     }
 
     public List<ImportacaoResultadoResponseDto> confirmar(
-            Long id, ImportacaoConfirmacaoRequestDto pedido, Integer usuarioId) {
-        conferirManual(id);
+            Long id, ImportacaoConfirmacaoRequestDto confirmacaoRequest, Integer usuarioId) {
+        validarRegistroManual(id);
 
-        return registrosConsumo.confirmar(id, pedido, usuarioId);
+        return registroConsumoService.confirmar(id, confirmacaoRequest, usuarioId);
     }
 
-    private void conferirManual(Long id) {
-        Importacao registro = registros.findById(id).orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Registro inexistente."
-        ));
+    private void validarRegistroManual(Long id) {
+        Optional<Importacao> registroOptional = registrosRepository.findById(id);
+
+        if (registroOptional.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Registro inexistente.");
+        }
+
+        Importacao registro = registroOptional.get();
 
         if (registro.getOrigem() != OrigemRegistroEnum.MANUAL) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Registro não é manual.");
         }
     }
 
-    private LancamentoManualPreviaResponseDto previa(Long id) {
-        List<ImportacaoLinhaResponseDto> detalhes = registrosConsumo.linhas(id);
+    private LancamentoManualPreviaResponseDto montarPrevia(Long id) {
+        List<ImportacaoLinhaResponseDto> detalhes = registroConsumoService.linhas(id);
         List<ConsumoTotalResponseDto> consumoAgregado = new ArrayList<>();
 
         for (ImportacaoLinhaResponseDto linha : detalhes) {
             for (ConsumoInsumoResponseDto consumo : linha.getConsumo()) {
-                int posicao = 0;
-
-                while (posicao < consumoAgregado.size()
-                        && consumoAgregado.get(posicao).getInsumoId() < consumo.getInsumoId()) {
-                    posicao++;
-                }
-
-                if (posicao < consumoAgregado.size()
-                        && consumoAgregado.get(posicao).getInsumoId().equals(consumo.getInsumoId())) {
-                    ConsumoTotalResponseDto total = consumoAgregado.get(posicao);
-                    BigDecimal quantidade = total.getQuantidadePrevista().add(consumo.getPrevisto());
-                    total.setQuantidadePrevista(quantidade);
-                } else {
-                    consumoAgregado.add(posicao, new ConsumoTotalResponseDto(
-                            consumo.getInsumoId(), consumo.getPrevisto()
-                    ));
-                }
+                adicionarConsumoAoTotal(consumoAgregado, consumo);
             }
         }
 
-        return new LancamentoManualPreviaResponseDto(registrosConsumo.consultar(id), detalhes, consumoAgregado);
+        ImportacaoResumoResponseDto resumo = registroConsumoService.consultar(id);
+
+        return new LancamentoManualPreviaResponseDto(resumo, detalhes, consumoAgregado);
+    }
+
+    private void adicionarConsumoAoTotal(List<ConsumoTotalResponseDto> consumoAgregado, ConsumoInsumoResponseDto consumo) {
+        for (Integer posicao = 0; posicao < consumoAgregado.size(); posicao++) {
+            ConsumoTotalResponseDto total = consumoAgregado.get(posicao);
+
+            if (total.getInsumoId().equals(consumo.getInsumoId())) {
+                BigDecimal quantidade = total.getQuantidadePrevista().add(consumo.getPrevisto());
+                total.setQuantidadePrevista(quantidade);
+                return;
+            }
+
+            if (total.getInsumoId() > consumo.getInsumoId()) {
+                ConsumoTotalResponseDto novoTotal = new ConsumoTotalResponseDto(consumo.getInsumoId(), consumo.getPrevisto());
+                consumoAgregado.add(posicao, novoTotal);
+                return;
+            }
+        }
+
+        ConsumoTotalResponseDto novoTotal = new ConsumoTotalResponseDto(consumo.getInsumoId(), consumo.getPrevisto());
+        consumoAgregado.add(novoTotal);
     }
 }

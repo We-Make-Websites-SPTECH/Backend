@@ -1,9 +1,9 @@
 package school.sptech.wmw_projeto_pi.service;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import school.sptech.wmw_projeto_pi.dto.importacao.LinhaTxtDto;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -12,63 +12,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+@Service
 public class ImportacaoTxtParser {
-    @Value("${importacao.max-bytes:1048576}")
-    private int maxBytes;
+    private final Integer maxBytes = 1_048_576;
 
-    @Value("${importacao.max-linhas:10000}")
-    private int maxLinhas;
+    private final Integer maxLinhas = 250;
 
-    public static class Linha {
-        private final int numero;
-        private final String id;
-        private final String nome;
-        private final String quantidade;
-        private final String erro;
-
-        public Linha(int numero, String id, String nome, String quantidade, String erro) {
-            this.numero = numero;
-            this.id = id;
-            this.nome = nome;
-            this.quantidade = quantidade;
-            this.erro = erro;
-        }
-
-        public int getNumero() {
-            return numero;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public String getNome() {
-            return nome;
-        }
-
-        public String getQuantidade() {
-            return quantidade;
-        }
-
-        public String getErro() {
-            return erro;
-        }
-    }
-
-    public static class Arquivo {
-        private final List<Linha> linhas;
-
-        public Arquivo(List<Linha> linhas) {
-            this.linhas = linhas;
-        }
-
-        public List<Linha> getLinhas() {
-            return linhas;
-        }
-    }
-
-    public Arquivo analisar(byte[] bytes) {
+    public List<LinhaTxtDto> analisar(byte[] bytes) {
         if (bytes.length > maxBytes) {
             throw new ResponseStatusException(HttpStatus.CONTENT_TOO_LARGE, "Arquivo excede o limite.");
         }
@@ -84,16 +34,11 @@ public class ImportacaoTxtParser {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O arquivo deve ser UTF-8 válido.");
         }
 
-        String leitura = texto;
+        String[] linhas = texto.split("\r?\n", -1);
+        List<LinhaTxtDto> resultado = new ArrayList<>();
+        Boolean primeira = true;
 
-        if (texto.startsWith("\uFEFF")) {
-            leitura = texto.substring(1);
-        }
-        String[] linhas = leitura.split("\r?\n", -1);
-        List<Linha> resultado = new ArrayList<>();
-        boolean primeira = true;
-
-        for (int i = 0; i < linhas.length; i++) {
+        for (Integer i = 0; i < linhas.length; i++) {
             String original = linhas[i];
 
             if (original.isBlank()) {
@@ -102,7 +47,7 @@ public class ImportacaoTxtParser {
 
             String[] colunas = original.split(";", -1);
 
-            for (int j = 0; j < colunas.length; j++) {
+            for (Integer j = 0; j < colunas.length; j++) {
                 colunas[j] = colunas[j].trim();
             }
 
@@ -132,11 +77,11 @@ public class ImportacaoTxtParser {
                 erro = "Use exatamente ID;NOME;QUANTIDADE.";
             }
 
-            if (erro == null && (inteiro(id) == null || inteiro(quantidade) == null || nome.isBlank())) {
+            if (erro == null && (converterParaInteiro(id) == null || converterParaInteiro(quantidade) == null || nome.isBlank())) {
                 erro = "ID e quantidade devem ser inteiros positivos; nome é obrigatório.";
             }
 
-            resultado.add(new Linha(i + 1, id, nome, quantidade, erro));
+            resultado.add(new LinhaTxtDto(i + 1, id, nome, quantidade, erro));
 
             if (resultado.size() > maxLinhas) {
                 throw new ResponseStatusException(HttpStatus.CONTENT_TOO_LARGE, "Arquivo excede o limite de linhas.");
@@ -147,16 +92,16 @@ public class ImportacaoTxtParser {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Arquivo sem linhas de produto.");
         }
 
-        return new Arquivo(resultado);
+        return resultado;
     }
 
-    public static Integer inteiro(String texto) {
+    public static Integer converterParaInteiro(String texto) {
         if (texto == null || !texto.matches("[0-9]+")) {
             return null;
         }
 
         try {
-            int valor = Integer.parseInt(texto);
+            Integer valor = Integer.parseInt(texto);
 
             if (valor <= 0) {
                 return null;

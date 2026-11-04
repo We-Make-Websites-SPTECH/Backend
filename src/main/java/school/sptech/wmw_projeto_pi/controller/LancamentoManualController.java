@@ -17,22 +17,22 @@ import java.util.List;
 @RequestMapping("/lancamentos/manuais")
 @CrossOrigin(origins = "http://localhost:5173")
 public class LancamentoManualController {
-    private final LancamentoManualService service;
+    private final LancamentoManualService lancamentoManualService;
 
-    public LancamentoManualController(LancamentoManualService service) {
-        this.service = service;
+    public LancamentoManualController(LancamentoManualService lancamentoManualService) {
+        this.lancamentoManualService = lancamentoManualService;
     }
 
     @PostMapping("/previa")
     public ResponseEntity<LancamentoManualPreviaResponseDto> preparar(
             @Valid @RequestBody LancamentoManualRequestDto pedido,
             @RequestHeader("Usuario-Id") Integer usuarioId) {
-        return ResponseEntity.status(201).body(service.preparar(pedido, usuarioId));
+        return ResponseEntity.status(201).body(lancamentoManualService.preparar(pedido, usuarioId));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<LancamentoManualPreviaResponseDto> consultar(@PathVariable Long id) {
-        return ResponseEntity.ok(service.consultar(id));
+        return ResponseEntity.ok(lancamentoManualService.consultar(id));
     }
 
     @PatchMapping("/{id}/linhas/{linhaId}/ingredientes")
@@ -41,7 +41,7 @@ public class LancamentoManualController {
             @PathVariable Long linhaId,
             @Valid @RequestBody ConsumoPersonalizacaoRequestDto pedido,
             @RequestHeader("Usuario-Id") Integer usuarioId) {
-        return ResponseEntity.ok(service.personalizar(id, linhaId, pedido, usuarioId));
+        return ResponseEntity.ok(lancamentoManualService.personalizar(id, linhaId, pedido, usuarioId));
     }
 
     @PostMapping("/{id}/confirmar")
@@ -49,6 +49,6 @@ public class LancamentoManualController {
             @PathVariable Long id,
             @Valid @RequestBody ImportacaoConfirmacaoRequestDto pedido,
             @RequestHeader("Usuario-Id") Integer usuarioId) {
-        return ResponseEntity.ok(service.confirmar(id, pedido, usuarioId));
+        return ResponseEntity.ok(lancamentoManualService.confirmar(id, pedido, usuarioId));
     }
 }

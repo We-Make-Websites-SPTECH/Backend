@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import school.sptech.wmw_projeto_pi.dto.importacao.ComponenteConsumoDto;
 import school.sptech.wmw_projeto_pi.dto.importacao.ConsumoPersonalizacaoRequestDto;
 import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoConfirmacaoRequestDto;
 import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoLinhaResponseDto;
@@ -26,97 +27,95 @@ import school.sptech.wmw_projeto_pi.repository.UsuarioRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.Optional;
 
 @Service
 public class ProcessamentoConsumoService {
-    private final ImportacaoRepository lotes;
-    private final ImportacaoLinhaRepository linhas;
-    private final ImportacaoLinhaConsumoRepository consumos;
-    private final ProdutoRepository produtos;
-    private final UsuarioRepository usuarios;
-    private final ConsumoService calculoConsumo;
-    private final EstoqueService estoque;
+    private final ImportacaoRepository lotesRepository;
+    private final ImportacaoLinhaRepository linhasRepository;
+    private final ImportacaoLinhaConsumoRepository consumosRepository;
+    private final ProdutoRepository produtosRepository;
+    private final UsuarioRepository usuariosRepository;
+    private final ConsumoService calculoConsumoService;
+    private final EstoqueService estoqueService;
 
     public ProcessamentoConsumoService(
-            ImportacaoRepository lotes,
-            ImportacaoLinhaRepository linhas,
-            ImportacaoLinhaConsumoRepository consumos,
-            ProdutoRepository produtos,
-            UsuarioRepository usuarios,
-            ConsumoService calculoConsumo,
-            EstoqueService estoque) {
-        this.lotes = lotes;
-        this.linhas = linhas;
-        this.consumos = consumos;
-        this.produtos = produtos;
-        this.usuarios = usuarios;
-        this.calculoConsumo = calculoConsumo;
-        this.estoque = estoque;
+            ImportacaoRepository lotesRepository,
+            ImportacaoLinhaRepository linhasRepository,
+            ImportacaoLinhaConsumoRepository consumosRepository,
+            ProdutoRepository produtosRepository,
+            UsuarioRepository usuariosRepository,
+            ConsumoService calculoConsumoService,
+            EstoqueService estoqueService) {
+        this.lotesRepository = lotesRepository;
+        this.linhasRepository = linhasRepository;
+        this.consumosRepository = consumosRepository;
+        this.produtosRepository = produtosRepository;
+        this.usuariosRepository = usuariosRepository;
+        this.calculoConsumoService = calculoConsumoService;
+        this.estoqueService = estoqueService;
     }
 
-    public void preparar(ImportacaoLinha linha, Integer produtoId, String nome, Integer quantidade) {
-        preparar(linha, produtoId, nome, quantidade, false);
+    public void prepararLinhaTxt(ImportacaoLinha linha, Integer produtoId, String nome, Integer quantidade) {
+        prepararLinha(linha, produtoId, nome, quantidade, false);
     }
 
-    public void prepararManual(ImportacaoLinha linha, Integer produtoId, Integer quantidade) {
-        preparar(linha, produtoId, "Produto ID " + produtoId, quantidade, true);
+    public void prepararLinhaManual(ImportacaoLinha linha, Integer produtoId, Integer quantidade) {
+        prepararLinha(linha, produtoId, "Produto ID " + produtoId, quantidade, true);
     }
 
-    private void preparar(
-            ImportacaoLinha linha, Integer produtoId, String nome, Integer quantidade, boolean manual) {
-        linha.setNomeAtual(limitar(nome, 255));
+    private void prepararLinha(
+            ImportacaoLinha linha, Integer produtoId, String nome, Integer quantidade, Boolean origemManual) {
+        linha.setNomeAtual(limitarTexto(nome, 255));
         linha.setQuantidadeAtual(quantidade);
 
         try {
-            if (produtoId == null || quantidade == null || quantidade <= 0 || nome == null || nome.isBlank()) {
-                throw new ImportacaoInvalidaException("ID, nome e quantidade inteira positiva são obrigatórios.");
-            }
-
-            Produto produto = produtos.findById(produtoId)
-                    .orElseThrow(() -> new ImportacaoInvalidaException("Produto inexistente."));
+            validarDadosLinha(produtoId, nome, quantidade);
+            Produto produto = buscarProduto(produtoId);
             linha.setProduto(produto);
 
-            if (!manual && !produto.getNome().trim().equalsIgnoreCase(nome.trim())) {
-                throw new ImportacaoInvalidaException("Nome não corresponde ao ID do produto.");
+            if (origemManual) {
+                linha.setNomeAtual(limitarTexto(produto.getNome(), 255));
+            } else {
+                validarNomeProduto(produto, nome);
             }
 
-            if (manual) {
-                linha.setNomeAtual(limitar(produto.getNome(), 255));
+            List<ComponenteConsumoDto> consumoCalculado = calculoConsumoService.calcularConsumo(produto, quantidade);
+
+            if (!origemManual) {
+                linha.setNomeAtual(limitarTexto(produto.getNome(), 255));
             }
 
-            List<ConsumoService.Componente> calculado = calculoConsumo.calcularConsumo(produto, quantidade);
-            linha.setNomeAtual(limitar(produto.getNome(), 255));
             linha.setStatus(StatusImportacaoLinhaEnum.PENDENTE);
-            linhas.saveAndFlush(linha);
-            salvarComponentes(linha, calculado);
+            linhasRepository.save(linha);
+            salvarComponentes(linha, consumoCalculado);
         } catch (ImportacaoInvalidaException e) {
             linha.setStatus(StatusImportacaoLinhaEnum.INVALIDA);
             linha.setErroCodigo("LINHA_INVALIDA");
-            linha.setErroMensagem(limitar(e.getMessage(), 255));
-            linhas.save(linha);
+            linha.setErroMensagem(limitarTexto(e.getMessage(), 255));
+            linhasRepository.save(linha);
         }
     }
 
-    private void salvarComponentes(ImportacaoLinha linha, List<ConsumoService.Componente> componentes) {
-        for (ConsumoService.Componente componente : componentes) {
+    private void salvarComponentes(ImportacaoLinha linha, List<ComponenteConsumoDto> componentes) {
+        for (ComponenteConsumoDto componente : componentes) {
             ImportacaoLinhaConsumo consumo = new ImportacaoLinhaConsumo();
             consumo.setLinha(linha);
             consumo.setInsumo(componente.getInsumo());
             consumo.setQuantidadePrevista(componente.getQuantidade());
-            consumos.save(consumo);
+            consumosRepository.save(consumo);
         }
     }
 
-    private ImportacaoLinha bloquear(Long loteId, Long linhaId) {
-        ImportacaoLinha linha = linhas.findWithLockById(linhaId).orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Linha inexistente."
-        ));
+    private ImportacaoLinha buscarLinha(Long loteId, Long linhaId) {
+        Optional<ImportacaoLinha> linhaOptional = linhasRepository.findById(linhaId);
+
+        if (linhaOptional.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Linha inexistente.");
+        }
+
+        ImportacaoLinha linha = linhaOptional.get();
 
         if (!linha.getImportacao().getId().equals(loteId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Linha não pertence ao registro.");
@@ -125,23 +124,27 @@ public class ProcessamentoConsumoService {
         return linha;
     }
 
-    private Importacao loteBloqueado(Long id) {
-        return lotes.findWithLockById(id).orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Registro inexistente."
-        ));
+    private Importacao buscarRegistro(Long id) {
+        Optional<Importacao> registroOptional = lotesRepository.findById(id);
+
+        if (registroOptional.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Registro inexistente.");
+        }
+
+        return registroOptional.get();
     }
 
     @Transactional
     public ImportacaoLinhaResponseDto personalizar(
             Long loteId, Long linhaId, ConsumoPersonalizacaoRequestDto pedido, Integer usuarioId) {
         buscarUsuario(usuarioId);
-        Importacao lote = loteBloqueado(loteId);
+        Importacao lote = buscarRegistro(loteId);
 
         if (lote.getStatus() != StatusImportacaoEnum.PREVIA) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Operação não permite mais edições.");
         }
 
-        ImportacaoLinha linha = bloquear(loteId, linhaId);
+        ImportacaoLinha linha = buscarLinha(loteId, linhaId);
 
         if (linha.getStatus() != StatusImportacaoLinhaEnum.PENDENTE) {
             throw new ResponseStatusException(
@@ -149,71 +152,30 @@ public class ProcessamentoConsumoService {
             );
         }
 
-        if (!Objects.equals(linha.getVersao(), pedido.getVersao())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Prévia alterada. Consulte novamente.");
-        }
+        List<ComponenteConsumoDto> consumoCalculado = calculoConsumoService.calcularPersonalizado(
+                linha.getProduto(), linha.getQuantidadeAtual(), pedido.getVariacoes()
+        );
 
-        List<ConsumoService.Componente> calculado;
-        try {
-            calculado = calculoConsumo.calcularPersonalizado(
-                    linha.getProduto(), linha.getQuantidadeAtual(), pedido.getVariacoes()
-            );
-        } catch (ImportacaoInvalidaException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        }
-
-        consumos.deleteAll(consumos.findByLinhaIdOrderByInsumoIdAsc(linhaId));
-        consumos.flush();
-        salvarComponentes(linha, calculado);
+        List<ImportacaoLinhaConsumo> consumoAnterior = consumosRepository.findByLinhaIdOrderByInsumoIdAsc(linhaId);
+        consumosRepository.deleteAll(consumoAnterior);
+        consumosRepository.flush();
+        salvarComponentes(linha, consumoCalculado);
         linha.atualizarPrevia();
-        linhas.saveAndFlush(linha);
+        linhasRepository.save(linha);
 
-        return detalhe(linha);
+        return montarDetalheLinha(linha);
     }
 
     @Transactional
-    public List<Long> iniciar(Long loteId, ImportacaoConfirmacaoRequestDto pedido, Integer usuarioId) {
+    public List<Long> iniciarConfirmacao(Long loteId, ImportacaoConfirmacaoRequestDto pedido, Integer usuarioId) {
         buscarUsuario(usuarioId);
-        Importacao lote = loteBloqueado(loteId);
-        List<ImportacaoLinha> itens = linhas.findByImportacaoIdOrderByNumeroLinhaAsc(loteId);
+        Importacao lote = buscarRegistro(loteId);
+        List<ImportacaoLinha> itens = linhasRepository.findByImportacaoIdOrderByNumeroLinhaAsc(loteId);
 
         if (lote.getStatus() == StatusImportacaoEnum.PREVIA) {
-            Map<Long, Long> selecoes = new HashMap<>();
-
-            for (ImportacaoSelecaoRequestDto selecao : pedido.getLinhas()) {
-                if (selecoes.containsKey(selecao.getLinhaId())) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Seleção de linha repetida.");
-                }
-
-                selecoes.put(selecao.getLinhaId(), selecao.getVersao());
-            }
-
-            List<ImportacaoLinha> validas = new ArrayList<>();
-            Set<Long> idsValidos = new HashSet<>();
-
-            for (ImportacaoLinha item : itens) {
-                if (item.getStatus() == StatusImportacaoLinhaEnum.PENDENTE) {
-                    validas.add(item);
-                    idsValidos.add(item.getId());
-                }
-            }
-
-            if (validas.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Registro sem itens válidos.");
-            }
-
-            if (!selecoes.keySet().equals(idsValidos)) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Confirme todas as linhas válidas da prévia.");
-            }
-
-            for (ImportacaoLinha linha : validas) {
-                if (!Objects.equals(linha.getVersao(), selecoes.get(linha.getId()))) {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Prévia alterada. Consulte novamente.");
-                }
-            }
-
+            validarSelecaoConfirmacao(itens, pedido.getLinhas());
             lote.setStatus(StatusImportacaoEnum.PROCESSANDO);
-            lotes.saveAndFlush(lote);
+            lotesRepository.save(lote);
         }
 
         List<Long> ids = new ArrayList<>();
@@ -227,10 +189,10 @@ public class ProcessamentoConsumoService {
 
     @Transactional
     public ImportacaoResultadoResponseDto confirmarLinha(Long loteId, Long linhaId, Integer usuarioId) {
-        ImportacaoLinha linha = bloquear(loteId, linhaId);
+        ImportacaoLinha linha = buscarLinha(loteId, linhaId);
 
         if (linha.getStatus() != StatusImportacaoLinhaEnum.PENDENTE) {
-            return resultado(linha, true);
+            return montarResultado(linha, true);
         }
 
         if (linha.getImportacao().getStatus() != StatusImportacaoEnum.PROCESSANDO) {
@@ -241,62 +203,62 @@ public class ProcessamentoConsumoService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Produto desativado.");
         }
 
-        List<ImportacaoLinhaConsumo> componentes = consumos.findByLinhaIdOrderByInsumoIdAsc(linhaId);
+        List<ImportacaoLinhaConsumo> componentes = consumosRepository.findByLinhaIdOrderByInsumoIdAsc(linhaId);
 
         for (ImportacaoLinhaConsumo componente : componentes) {
-            estoque.registrarSaidaPorConsumo(componente, usuarioId);
+            estoqueService.registrarSaidaPorConsumo(componente, usuarioId);
         }
 
         linha.setStatus(StatusImportacaoLinhaEnum.PROCESSADA);
         linha.setProcessadoEm(LocalDateTime.now());
         linha.setErroCodigo(null);
         linha.setErroMensagem(null);
-        linhas.saveAndFlush(linha);
+        linhasRepository.save(linha);
 
-        return resultado(linha, false);
+        return montarResultado(linha, false);
     }
 
     @Transactional
     public ImportacaoResultadoResponseDto registrarFalha(Long loteId, Long linhaId) {
-        ImportacaoLinha linha = bloquear(loteId, linhaId);
+        ImportacaoLinha linha = buscarLinha(loteId, linhaId);
 
         if (linha.getStatus() == StatusImportacaoLinhaEnum.PENDENTE) {
             linha.setStatus(StatusImportacaoLinhaEnum.INVALIDA);
             linha.setErroCodigo("FALHA_PROCESSAMENTO");
             linha.setErroMensagem("Não foi possível processar este item. Nenhum ingrediente dele foi descontado.");
-            linhas.saveAndFlush(linha);
+            linhasRepository.save(linha);
         }
 
-        return resultado(linha, false);
+        return montarResultado(linha, false);
     }
 
     @Transactional
-    public void encerrar(Long loteId) {
-        Importacao lote = loteBloqueado(loteId);
+    public void concluirRegistro(Long loteId) {
+        Importacao lote = buscarRegistro(loteId);
 
-        if (linhas.countByImportacaoIdAndStatus(loteId, StatusImportacaoLinhaEnum.PENDENTE) > 0) {
+        if (linhasRepository.countByImportacaoIdAndStatus(loteId, StatusImportacaoLinhaEnum.PENDENTE) > 0) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Confirmação ainda em processamento.");
         }
 
         if (lote.getStatus() != StatusImportacaoEnum.CONCLUIDO) {
             lote.setStatus(StatusImportacaoEnum.CONCLUIDO);
-            lotes.save(lote);
+            lotesRepository.save(lote);
         }
     }
 
-    private ImportacaoResultadoResponseDto resultado(ImportacaoLinha linha, boolean repeticao) {
+    private ImportacaoResultadoResponseDto montarResultado(ImportacaoLinha linha, Boolean repeticao) {
         return new ImportacaoResultadoResponseDto(
                 linha.getId(),
                 repeticao && linha.getStatus() == StatusImportacaoLinhaEnum.PROCESSADA,
                 linha.getErroCodigo(),
                 linha.getErroMensagem(),
-                detalhe(linha)
+                montarDetalheLinha(linha)
         );
     }
 
-    private ImportacaoLinhaResponseDto detalhe(ImportacaoLinha linha) {
+    private ImportacaoLinhaResponseDto montarDetalheLinha(ImportacaoLinha linha) {
         return ImportacaoMapper.toResponseDto(
-                linha, consumos.findByLinhaIdOrderByInsumoIdAsc(linha.getId())
+                linha, consumosRepository.findByLinhaIdOrderByInsumoIdAsc(linha.getId())
         );
     }
 
@@ -305,16 +267,78 @@ public class ProcessamentoConsumoService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário inexistente.");
         }
 
-        return usuarios.findById(id).orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Usuário inexistente."
-        ));
+        Optional<Usuario> usuarioOptional = usuariosRepository.findById(id);
+
+        if (usuarioOptional.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário inexistente.");
+        }
+
+        return usuarioOptional.get();
     }
 
-    static String limitar(String texto, int max) {
+    private void validarDadosLinha(Integer produtoId, String nome, Integer quantidade) {
+        if (produtoId == null || quantidade == null || quantidade <= 0 || nome == null || nome.isBlank()) {
+            throw new ImportacaoInvalidaException("ID, nome e quantidade inteira positiva são obrigatórios.");
+        }
+    }
+
+    private Produto buscarProduto(Integer produtoId) {
+        Optional<Produto> produtoOptional = produtosRepository.findById(produtoId);
+
+        if (produtoOptional.isEmpty()) {
+            throw new ImportacaoInvalidaException("Produto inexistente.");
+        }
+
+        return produtoOptional.get();
+    }
+
+    private void validarNomeProduto(Produto produto, String nomeInformado) {
+        if (!produto.getNome().trim().equalsIgnoreCase(nomeInformado.trim())) {
+            throw new ImportacaoInvalidaException("Nome não corresponde ao ID do produto.");
+        }
+    }
+
+    private void validarSelecaoConfirmacao(
+            List<ImportacaoLinha> linhasRegistro, List<ImportacaoSelecaoRequestDto> selecoes) {
+        List<Long> idsSelecionados = new ArrayList<>();
+
+        for (ImportacaoSelecaoRequestDto selecao : selecoes) {
+            if (idsSelecionados.contains(selecao.getLinhaId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Seleção de linha repetida.");
+            }
+
+            idsSelecionados.add(selecao.getLinhaId());
+        }
+
+        List<ImportacaoLinha> linhasValidas = new ArrayList<>();
+
+        for (ImportacaoLinha linha : linhasRegistro) {
+            if (linha.getStatus() == StatusImportacaoLinhaEnum.PENDENTE) {
+                linhasValidas.add(linha);
+            }
+        }
+
+        if (linhasValidas.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Registro sem itens válidos.");
+        }
+
+        if (idsSelecionados.size() != linhasValidas.size()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Confirme todas as linhas válidas da prévia.");
+        }
+
+        for (ImportacaoLinha linha : linhasValidas) {
+            if (!idsSelecionados.contains(linha.getId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Confirme todas as linhas válidas da prévia.");
+            }
+        }
+
+    }
+
+    static String limitarTexto(String texto, Integer tamanhoMaximo) {
         if (texto == null) {
             return null;
         }
 
-        return texto.substring(0, Math.min(texto.length(), max));
+        return texto.substring(0, Math.min(texto.length(), tamanhoMaximo));
     }
 }

@@ -20,7 +20,7 @@ public class ProdutoInsumo {
     @JoinColumn(name = "insumo_id", nullable = false)
     private Insumo insumo;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 12, scale = 3)
     private BigDecimal quantidade;
 
     @Column(name = "created_at", nullable = false)

@@ -233,10 +233,8 @@ CREATE TABLE importacao_linha (
     erro_mensagem VARCHAR(255) NULL,
     processado_em DATETIME(6) NULL,
     updated_at DATETIME(6) NULL,
-    versao BIGINT NOT NULL DEFAULT 0,
     CONSTRAINT uq_il_numero UNIQUE (importacao_id, numero_linha),
     CONSTRAINT chk_il_numero CHECK (numero_linha > 0),
-    CONSTRAINT chk_il_versao CHECK (versao >= 0),
     CONSTRAINT chk_il_status CHECK (status IN ('INVALIDA','PENDENTE','PROCESSADA')),
     CONSTRAINT fk_il_importacao FOREIGN KEY (importacao_id) REFERENCES importacao (id),
     CONSTRAINT fk_il_produto FOREIGN KEY (produto_id) REFERENCES produto (id)

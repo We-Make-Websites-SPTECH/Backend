@@ -22,12 +22,14 @@ import java.util.List;
 @RequestMapping("/importacoes")
 @CrossOrigin(origins = "http://localhost:5173")
 public class ImportacaoController {
-    private final RegistroConsumoService service;
-    private final ProcessamentoConsumoService processamento;
+    private final RegistroConsumoService registroConsumoService;
+    private final ProcessamentoConsumoService processamentoConsumoService;
 
-    public ImportacaoController(RegistroConsumoService service, ProcessamentoConsumoService processamento) {
-        this.service = service;
-        this.processamento = processamento;
+    public ImportacaoController(
+            RegistroConsumoService registroConsumoService,
+            ProcessamentoConsumoService processamentoConsumoService) {
+        this.registroConsumoService = registroConsumoService;
+        this.processamentoConsumoService = processamentoConsumoService;
     }
 
     @PostMapping(value = "/txt", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -36,23 +38,23 @@ public class ImportacaoController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataReferencia,
             @RequestHeader("Usuario-Id") Integer usuarioId) throws IOException {
         return ResponseEntity.status(201).body(
-                service.receber(arquivo.getOriginalFilename(), arquivo.getBytes(), dataReferencia, usuarioId)
+                registroConsumoService.receber(arquivo.getOriginalFilename(), arquivo.getBytes(), dataReferencia, usuarioId)
         );
     }
 
     @GetMapping
     public ResponseEntity<List<ImportacaoResumoResponseDto>> listar() {
-        return ResponseEntity.ok(service.listar());
+        return ResponseEntity.ok(registroConsumoService.listar());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ImportacaoResumoResponseDto> consultar(@PathVariable Long id) {
-        return ResponseEntity.ok(service.consultar(id));
+        return ResponseEntity.ok(registroConsumoService.consultar(id));
     }
 
     @GetMapping("/{id}/linhas")
     public ResponseEntity<List<ImportacaoLinhaResponseDto>> linhas(@PathVariable Long id) {
-        return ResponseEntity.ok(service.linhas(id));
+        return ResponseEntity.ok(registroConsumoService.linhas(id));
     }
 
     @PatchMapping("/{id}/linhas/{linhaId}/ingredientes")
@@ -61,7 +63,7 @@ public class ImportacaoController {
             @PathVariable Long linhaId,
             @Valid @RequestBody ConsumoPersonalizacaoRequestDto dados,
             @RequestHeader("Usuario-Id") Integer usuarioId) {
-        return ResponseEntity.ok(processamento.personalizar(id, linhaId, dados, usuarioId));
+        return ResponseEntity.ok(processamentoConsumoService.personalizar(id, linhaId, dados, usuarioId));
     }
 
     @PostMapping("/{id}/confirmar")
@@ -69,7 +71,7 @@ public class ImportacaoController {
             @PathVariable Long id,
             @Valid @RequestBody ImportacaoConfirmacaoRequestDto pedido,
             @RequestHeader("Usuario-Id") Integer usuarioId) {
-        return ResponseEntity.ok(service.confirmar(id, pedido, usuarioId));
+        return ResponseEntity.ok(registroConsumoService.confirmar(id, pedido, usuarioId));
     }
 
 }

@@ -26,7 +26,6 @@ public final class ImportacaoMapper {
                 linha.getNomeAtual(),
                 linha.getQuantidadeAtual(),
                 linha.getStatus(),
-                linha.getVersao(),
                 linha.getErroCodigo(),
                 linha.getErroMensagem(),
                 linha.getProcessadoEm(),

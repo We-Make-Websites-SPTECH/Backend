@@ -3,6 +3,7 @@ package school.sptech.wmw_projeto_pi.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
@@ -29,7 +30,7 @@ public class ImportacaoLinhaConsumo {
     private Insumo insumo;
 
     @NotNull
-    @PositiveOrZero
+    @Positive
     @Digits(integer = 9, fraction = 3)
     @Column(nullable = false, precision = 12, scale = 3)
     private BigDecimal quantidadePrevista;

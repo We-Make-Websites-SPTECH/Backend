@@ -2,15 +2,16 @@ package school.sptech.wmw_projeto_pi.service;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoConfirmacaoRequestDto;
 import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoLinhaResponseDto;
 import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoResumoResponseDto;
 import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoResultadoResponseDto;
+import school.sptech.wmw_projeto_pi.dto.importacao.LinhaTxtDto;
 import school.sptech.wmw_projeto_pi.entity.Importacao;
 import school.sptech.wmw_projeto_pi.entity.ImportacaoLinha;
+import school.sptech.wmw_projeto_pi.entity.ImportacaoLinhaConsumo;
 import school.sptech.wmw_projeto_pi.entity.Usuario;
 import school.sptech.wmw_projeto_pi.enums.StatusImportacaoEnum;
 import school.sptech.wmw_projeto_pi.enums.StatusImportacaoLinhaEnum;
@@ -23,139 +24,153 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class RegistroConsumoService {
-    private final ImportacaoRepository lotes;
-    private final ImportacaoLinhaRepository linhas;
-    private final ImportacaoLinhaConsumoRepository consumos;
-    private final ImportacaoTxtParser parser;
-    private final ProcessamentoConsumoService processamento;
+    private final ImportacaoRepository lotesRepository;
+    private final ImportacaoLinhaRepository linhasRepository;
+    private final ImportacaoLinhaConsumoRepository consumosRepository;
+    private final ImportacaoTxtParser txtParser;
+    private final ProcessamentoConsumoService processamentoConsumoService;
 
     public RegistroConsumoService(
-            ImportacaoRepository lotes,
-            ImportacaoLinhaRepository linhas,
-            ImportacaoLinhaConsumoRepository consumos,
-            ImportacaoTxtParser parser,
-            ProcessamentoConsumoService processamento) {
-        this.lotes = lotes;
-        this.linhas = linhas;
-        this.consumos = consumos;
-        this.parser = parser;
-        this.processamento = processamento;
+            ImportacaoRepository lotesRepository,
+            ImportacaoLinhaRepository linhasRepository,
+            ImportacaoLinhaConsumoRepository consumosRepository,
+            ImportacaoTxtParser txtParser,
+            ProcessamentoConsumoService processamentoConsumoService) {
+        this.lotesRepository = lotesRepository;
+        this.linhasRepository = linhasRepository;
+        this.consumosRepository = consumosRepository;
+        this.txtParser = txtParser;
+        this.processamentoConsumoService = processamentoConsumoService;
     }
 
-    @Transactional(isolation = Isolation.REPEATABLE_READ)
-    public ImportacaoResumoResponseDto receber(String nome, byte[] bytes, LocalDate data, Integer usuarioId) {
-        Usuario usuario = processamento.buscarUsuario(usuarioId);
-        ImportacaoTxtParser.Arquivo arquivo = parser.analisar(bytes);
+    @Transactional
+    public ImportacaoResumoResponseDto receber(String nomeArquivo, byte[] bytes, LocalDate dataReferencia, Integer usuarioId) {
+        Usuario usuario = processamentoConsumoService.buscarUsuario(usuarioId);
+        List<LinhaTxtDto> linhasRecebidas = txtParser.analisar(bytes);
 
-        if (nome == null) {
-            nome = "importacao.txt";
+        if (nomeArquivo == null) {
+            nomeArquivo = "importacao.txt";
         }
 
         Importacao lote = new Importacao();
-        lote.setNomeArquivo(ProcessamentoConsumoService.limitar(nome, 255));
-        lote.setDataReferencia(data);
+        lote.setNomeArquivo(ProcessamentoConsumoService.limitarTexto(nomeArquivo, 255));
+        lote.setDataReferencia(dataReferencia);
         lote.setCreatedAt(LocalDateTime.now());
         lote.setUsuario(usuario);
-        lotes.save(lote);
+        lotesRepository.save(lote);
 
-        for (ImportacaoTxtParser.Linha recebida : arquivo.getLinhas()) {
-            ImportacaoLinha linha = new ImportacaoLinha();
-            linha.setImportacao(lote);
-            linha.setNumeroLinha(recebida.getNumero());
-            String nomeProduto = recebida.getNome();
+        for (LinhaTxtDto linhaRecebida : linhasRecebidas) {
+            Integer produtoId = ImportacaoTxtParser.converterParaInteiro(linhaRecebida.getId());
+            Integer quantidade = ImportacaoTxtParser.converterParaInteiro(linhaRecebida.getQuantidade());
+            String nomeProduto = linhaRecebida.getNome();
 
             if (nomeProduto.isBlank()) {
-                nomeProduto = "Produto ID " + recebida.getId();
+                nomeProduto = "Produto ID " + linhaRecebida.getId();
             }
 
-            linha.setNomeAtual(ProcessamentoConsumoService.limitar(nomeProduto, 255));
-            linha.setQuantidadeAtual(ImportacaoTxtParser.inteiro(recebida.getQuantidade()));
+            ImportacaoLinha linha = new ImportacaoLinha();
+            linha.setImportacao(lote);
+            linha.setNumeroLinha(linhaRecebida.getNumero());
+            linha.setNomeAtual(ProcessamentoConsumoService.limitarTexto(nomeProduto, 255));
+            linha.setQuantidadeAtual(quantidade);
 
-            if (recebida.getErro() != null) {
+            if (linhaRecebida.getErro() != null) {
                 linha.setStatus(StatusImportacaoLinhaEnum.INVALIDA);
                 linha.setErroCodigo("FORMATO_INVALIDO");
-                linha.setErroMensagem(recebida.getErro());
-                linhas.save(linha);
+                linha.setErroMensagem(linhaRecebida.getErro());
+                linhasRepository.save(linha);
             } else {
-                processamento.preparar(
-                        linha, ImportacaoTxtParser.inteiro(recebida.getId()),
-                        recebida.getNome(), linha.getQuantidadeAtual()
+                processamentoConsumoService.prepararLinhaTxt(
+                        linha, produtoId, linhaRecebida.getNome(), quantidade
                 );
             }
         }
 
-        linhas.flush();
-        exigirValidas(lote.getId());
+        validarExistenciaDeLinhasValidas(lote.getId());
 
-        return resumo(lote);
+        return montarResumo(lote);
     }
 
-    public void exigirValidas(Long id) {
-        if (linhas.countByImportacaoIdAndStatus(id, StatusImportacaoLinhaEnum.PENDENTE) == 0) {
+    public void validarExistenciaDeLinhasValidas(Long id) {
+        if (linhasRepository.countByImportacaoIdAndStatus(id, StatusImportacaoLinhaEnum.PENDENTE) == 0) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "Registro sem linhas válidas. Corrija os dados e envie novamente."
             );
         }
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ImportacaoResumoResponseDto> listar() {
         List<ImportacaoResumoResponseDto> registros = new ArrayList<>();
 
-        for (Importacao lote : lotes.findByStatusOrderByIdDesc(StatusImportacaoEnum.CONCLUIDO)) {
-            registros.add(resumo(lote));
+        for (Importacao lote : lotesRepository.findByStatusOrderByIdDesc(StatusImportacaoEnum.CONCLUIDO)) {
+            ImportacaoResumoResponseDto resumo = montarResumo(lote);
+            registros.add(resumo);
         }
 
         return registros;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ImportacaoResumoResponseDto consultar(Long id) {
-        return resumo(buscar(id));
+        Importacao registro = buscarRegistro(id);
+
+        return montarResumo(registro);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ImportacaoLinhaResponseDto> linhas(Long id) {
-        buscar(id);
+        buscarRegistro(id);
         List<ImportacaoLinhaResponseDto> detalhes = new ArrayList<>();
 
-        for (ImportacaoLinha linha : linhas.findByImportacaoIdOrderByNumeroLinhaAsc(id)) {
-            detalhes.add(ImportacaoMapper.toResponseDto(
-                    linha, consumos.findByLinhaIdOrderByInsumoIdAsc(linha.getId())
-            ));
+        for (ImportacaoLinha linha : linhasRepository.findByImportacaoIdOrderByNumeroLinhaAsc(id)) {
+            List<ImportacaoLinhaConsumo> consumos = consumosRepository.findByLinhaIdOrderByInsumoIdAsc(linha.getId());
+            ImportacaoLinhaResponseDto detalhe = ImportacaoMapper.toResponseDto(linha, consumos);
+            detalhes.add(detalhe);
         }
 
         return detalhes;
     }
 
     public List<ImportacaoResultadoResponseDto> confirmar(
-            Long id, ImportacaoConfirmacaoRequestDto pedido, Integer usuarioId) {
-        List<Long> ids = processamento.iniciar(id, pedido, usuarioId);
+            Long id, ImportacaoConfirmacaoRequestDto confirmacaoRequest, Integer usuarioId) {
+        List<Long> idsDasLinhas = processamentoConsumoService.iniciarConfirmacao(id, confirmacaoRequest, usuarioId);
         List<ImportacaoResultadoResponseDto> resultados = new ArrayList<>();
 
-        for (Long linhaId : ids) {
+        for (Long linhaId : idsDasLinhas) {
             try {
-                resultados.add(processamento.confirmarLinha(id, linhaId, usuarioId));
+                ImportacaoResultadoResponseDto resultado = processamentoConsumoService.confirmarLinha(id, linhaId, usuarioId);
+                resultados.add(resultado);
             } catch (RuntimeException e) {
-                resultados.add(processamento.registrarFalha(id, linhaId));
+                ImportacaoResultadoResponseDto resultado = processamentoConsumoService.registrarFalha(id, linhaId);
+                resultados.add(resultado);
             }
         }
 
-        processamento.encerrar(id);
+        processamentoConsumoService.concluirRegistro(id);
 
         return resultados;
     }
 
-    private Importacao buscar(Long id) {
-        return lotes.findById(id).orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Registro inexistente."
-        ));
+    private Importacao buscarRegistro(Long id) {
+        Optional<Importacao> registroOptional = lotesRepository.findById(id);
+
+        if (registroOptional.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Registro inexistente.");
+        }
+
+        return registroOptional.get();
     }
 
-    private ImportacaoResumoResponseDto resumo(Importacao lote) {
+    private ImportacaoResumoResponseDto montarResumo(Importacao lote) {
+        Long quantidadePendente = linhasRepository.countByImportacaoIdAndStatus(lote.getId(), StatusImportacaoLinhaEnum.PENDENTE);
+        Long quantidadeInvalida = linhasRepository.countByImportacaoIdAndStatus(lote.getId(), StatusImportacaoLinhaEnum.INVALIDA);
+        Long quantidadeProcessada = linhasRepository.countByImportacaoIdAndStatus(lote.getId(), StatusImportacaoLinhaEnum.PROCESSADA);
+
         return new ImportacaoResumoResponseDto(
                 lote.getId(),
                 lote.getOrigem(),
@@ -163,9 +178,9 @@ public class RegistroConsumoService {
                 lote.getDataReferencia(),
                 lote.getCreatedAt(),
                 lote.getStatus(),
-                linhas.countByImportacaoIdAndStatus(lote.getId(), StatusImportacaoLinhaEnum.PENDENTE),
-                linhas.countByImportacaoIdAndStatus(lote.getId(), StatusImportacaoLinhaEnum.INVALIDA),
-                linhas.countByImportacaoIdAndStatus(lote.getId(), StatusImportacaoLinhaEnum.PROCESSADA)
+                quantidadePendente,
+                quantidadeInvalida,
+                quantidadeProcessada
         );
     }
 }

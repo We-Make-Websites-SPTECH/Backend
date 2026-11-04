@@ -18,8 +18,6 @@ public class ImportacaoLinhaResponseDto {
 
     private StatusImportacaoLinhaEnum status;
 
-    private Long versao;
-
     private String erroCodigo;
 
     private String erroMensagem;
@@ -38,7 +36,6 @@ public class ImportacaoLinhaResponseDto {
             String nome,
             Integer quantidade,
             StatusImportacaoLinhaEnum status,
-            Long versao,
             String erroCodigo,
             String erroMensagem,
             LocalDateTime processadoEm,
@@ -49,7 +46,6 @@ public class ImportacaoLinhaResponseDto {
         this.nome = nome;
         this.quantidade = quantidade;
         this.status = status;
-        this.versao = versao;
         this.erroCodigo = erroCodigo;
         this.erroMensagem = erroMensagem;
         this.processadoEm = processadoEm;
@@ -102,14 +98,6 @@ public class ImportacaoLinhaResponseDto {
 
     public void setStatus(StatusImportacaoLinhaEnum status) {
         this.status = status;
-    }
-
-    public Long getVersao() {
-        return versao;
-    }
-
-    public void setVersao(Long versao) {
-        this.versao = versao;
     }
 
     public String getErroCodigo() {
