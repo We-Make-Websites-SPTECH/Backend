@@ -15,7 +15,7 @@ public class InsumoRequestDtoCreate {
     private String nome;
 
     @NotNull
-    @Pattern(regexp = "g|ml|un", message = "Unidade de medida deve ser g, ml ou un")
+    @Pattern(regexp = "g|un", message = "Unidade de medida deve ser g ou un")
     private String unidadeMedida;
 
     @NotNull

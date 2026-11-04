@@ -59,7 +59,6 @@ public class InsumoMapper {
 
     private static UnidadeMedidaEnum toUnidadeEntity(String unidadeMedida) {
         if ("g".equals(unidadeMedida)) return UnidadeMedidaEnum.GRAMA;
-        if ("ml".equals(unidadeMedida)) return UnidadeMedidaEnum.ML;
         if ("un".equals(unidadeMedida)) return UnidadeMedidaEnum.UNIDADE;
 
         throw new UnidadeMedidaInvalidaException();
@@ -67,7 +66,6 @@ public class InsumoMapper {
 
     private static String toUnidadeResponse(UnidadeMedidaEnum unidadeMedida) {
         if (unidadeMedida == UnidadeMedidaEnum.GRAMA) return "g";
-        if (unidadeMedida == UnidadeMedidaEnum.ML) return "ml";
         if (unidadeMedida == UnidadeMedidaEnum.UNIDADE) return "un";
 
         throw new UnidadeMedidaInvalidaException();
