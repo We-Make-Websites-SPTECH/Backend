@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
-import school.sptech.wmw_projeto_pi.dto.dashboard.MovimentacaoPeriodoDto;
+import school.sptech.wmw_projeto_pi.dto.interno.MovimentacaoPeriodoDto;
 import school.sptech.wmw_projeto_pi.entity.Insumo;
 import school.sptech.wmw_projeto_pi.entity.MovimentacaoEstoque;
 import school.sptech.wmw_projeto_pi.entity.Usuario;
