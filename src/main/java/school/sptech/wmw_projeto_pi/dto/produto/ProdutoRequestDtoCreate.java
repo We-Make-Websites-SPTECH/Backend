@@ -4,16 +4,20 @@ import school.sptech.wmw_projeto_pi.enums.TipoProdutoEnum;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 public class ProdutoRequestDtoCreate {
 
     @NotBlank
+    @Size(max = 255)
     private String nome;
 
     @NotNull
     private TipoProdutoEnum tipo;
 
     @NotNull
+    @Positive
     private Integer tamanho;
 
     public ProdutoRequestDtoCreate() {

@@ -3,7 +3,7 @@ package school.sptech.wmw_projeto_pi.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import school.sptech.wmw_projeto_pi.dto.dashboard.MovimentacaoPeriodoDto;
+import school.sptech.wmw_projeto_pi.dto.interno.MovimentacaoPeriodoDto;
 import school.sptech.wmw_projeto_pi.entity.MovimentacaoEstoque;
 
 import java.time.LocalDateTime;
@@ -13,7 +13,7 @@ import java.util.List;
 public interface MovimentacaoEstoqueRepository extends JpaRepository<MovimentacaoEstoque, Long> {
 
     @Query("""
-            SELECT new school.sptech.wmw_projeto_pi.dto.dashboard.MovimentacaoPeriodoDto(
+            SELECT new school.sptech.wmw_projeto_pi.dto.interno.MovimentacaoPeriodoDto(
                 m.insumo.id,
                 m.insumo.nome,
                 m.insumo.unidadeMedida,

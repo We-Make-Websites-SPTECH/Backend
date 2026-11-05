@@ -1,20 +1,19 @@
 package school.sptech.wmw_projeto_pi.dto.produtoInsumo;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 public class ProdutoInsumoRequestDto {
     @NotNull(message = "O ID do produto é obrigatório.")
+    @Positive
     private Integer produtoId;
 
     @NotEmpty
-    @Valid
-    private List<ProdutoInsumoItemRequestDto> ingredientes;
+    private List<@NotNull @Valid ProdutoInsumoItemRequestDto> ingredientes;
 
     public ProdutoInsumoRequestDto() {
     }

@@ -1,7 +1,7 @@
 package school.sptech.wmw_projeto_pi.service;
 
 import org.springframework.stereotype.Service;
-import school.sptech.wmw_projeto_pi.dto.importacao.ComponenteConsumoDto;
+import school.sptech.wmw_projeto_pi.dto.interno.ComponenteConsumoDto;
 import school.sptech.wmw_projeto_pi.dto.importacao.ConsumoIngredienteRequestDto;
 import school.sptech.wmw_projeto_pi.dto.importacao.ConsumoVariacaoRequestDto;
 import school.sptech.wmw_projeto_pi.entity.Insumo;

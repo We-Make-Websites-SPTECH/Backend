@@ -8,7 +8,7 @@ import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoConfirmacaoRequestD
 import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoLinhaResponseDto;
 import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoResumoResponseDto;
 import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoResultadoResponseDto;
-import school.sptech.wmw_projeto_pi.dto.importacao.LinhaTxtDto;
+import school.sptech.wmw_projeto_pi.dto.interno.LinhaTxtDto;
 import school.sptech.wmw_projeto_pi.entity.Importacao;
 import school.sptech.wmw_projeto_pi.entity.ImportacaoLinha;
 import school.sptech.wmw_projeto_pi.entity.ImportacaoLinhaConsumo;

@@ -1,4 +1,4 @@
-package school.sptech.wmw_projeto_pi.dto.dashboard;
+package school.sptech.wmw_projeto_pi.dto.interno;
 
 import school.sptech.wmw_projeto_pi.enums.MotivoMovimentacaoEnum;
 import school.sptech.wmw_projeto_pi.enums.TipoMovimentacaoEnum;

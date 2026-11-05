@@ -2,14 +2,14 @@ package school.sptech.wmw_projeto_pi.dto.produtoInsumo;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
 public class ProdutoInsumoUpdateRequestDto {
 
     @NotEmpty(message = "A receita deve possuir pelo menos um ingrediente.")
-    @Valid
-    private List<ProdutoInsumoItemRequestDto> ingredientes;
+    private List<@NotNull @Valid ProdutoInsumoItemRequestDto> ingredientes;
 
     public ProdutoInsumoUpdateRequestDto() {
     }
