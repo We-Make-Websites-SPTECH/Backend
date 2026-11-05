@@ -1,4 +1,4 @@
-package school.sptech.wmw_projeto_pi.dto.importacao;
+package school.sptech.wmw_projeto_pi.dto.interno;
 
 public class LinhaTxtDto {
     private Integer numero;

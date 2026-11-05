@@ -1,16 +1,20 @@
 package school.sptech.wmw_projeto_pi.dto.produtoInsumo;
 
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
 
 public class ProdutoInsumoItemRequestDto {
     @NotNull
+    @Positive
     private Integer insumoId;
 
     @NotNull
     @DecimalMin(value = "0.0", inclusive = false)
+    @Digits(integer = 9, fraction = 3)
     private BigDecimal quantidade;
 
     public ProdutoInsumoItemRequestDto() {

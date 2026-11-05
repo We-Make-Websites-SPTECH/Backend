@@ -72,7 +72,8 @@ public class InsumoService {
         insumo.setCreatedBy(usuario);
 
         salvarInsumo(insumo);
-        movimentacaoEstoqueService.registrarSaldoInicial(insumo.getId(), usuario, saldoInicial);
+        BigDecimal saldoInicialLiquido = EstoqueService.calcularQuantidadeLiquida(saldoInicial, insumo.getPercentualPerda());
+        movimentacaoEstoqueService.registrarSaldoInicial(insumo.getId(), usuario, saldoInicialLiquido);
 
         return insumo;
     }

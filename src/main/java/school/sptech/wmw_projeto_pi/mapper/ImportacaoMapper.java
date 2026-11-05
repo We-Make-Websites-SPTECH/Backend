@@ -34,12 +34,15 @@ public final class ImportacaoMapper {
     }
 
     private static ConsumoInsumoResponseDto toConsumoResponseDto(ImportacaoLinhaConsumo componente) {
-        return new ConsumoInsumoResponseDto(
+        ConsumoInsumoResponseDto dto = new ConsumoInsumoResponseDto(
                 componente.getId(),
                 componente.getInsumo().getId(),
                 componente.getQuantidadePrevista(),
                 componente.getQuantidadeEfetivada(),
                 componente.getAviso()
         );
+        dto.setNome(componente.getInsumo().getNome());
+        dto.setUnidadeMedida(componente.getInsumo().getUnidadeMedida());
+        return dto;
     }
 }

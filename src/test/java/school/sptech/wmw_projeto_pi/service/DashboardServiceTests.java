@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import school.sptech.wmw_projeto_pi.dto.dashboard.DashboardResponseDto;
 import school.sptech.wmw_projeto_pi.dto.dashboard.InsumosMaisConsumidosDto;
 import school.sptech.wmw_projeto_pi.dto.dashboard.MovimentacaoSemanalDto;
-import school.sptech.wmw_projeto_pi.dto.dashboard.MovimentacaoPeriodoDto;
+import school.sptech.wmw_projeto_pi.dto.interno.MovimentacaoPeriodoDto;
 import school.sptech.wmw_projeto_pi.dto.dashboard.PerdasQuebrasDto;
 import school.sptech.wmw_projeto_pi.dto.dashboard.ResumoMovimentacaoDto;
 import school.sptech.wmw_projeto_pi.enums.MotivoMovimentacaoEnum;

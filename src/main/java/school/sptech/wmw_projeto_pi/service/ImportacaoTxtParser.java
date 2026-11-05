@@ -3,7 +3,7 @@ package school.sptech.wmw_projeto_pi.service;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import school.sptech.wmw_projeto_pi.dto.importacao.LinhaTxtDto;
+import school.sptech.wmw_projeto_pi.dto.interno.LinhaTxtDto;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;

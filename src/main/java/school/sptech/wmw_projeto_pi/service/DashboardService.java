@@ -5,7 +5,7 @@ import school.sptech.wmw_projeto_pi.dto.dashboard.DashboardResponseDto;
 import school.sptech.wmw_projeto_pi.dto.dashboard.EntradasSaidasDto;
 import school.sptech.wmw_projeto_pi.dto.dashboard.InsumosMaisConsumidosDto;
 import school.sptech.wmw_projeto_pi.dto.dashboard.InsumosStatusDto;
-import school.sptech.wmw_projeto_pi.dto.dashboard.MovimentacaoPeriodoDto;
+import school.sptech.wmw_projeto_pi.dto.interno.MovimentacaoPeriodoDto;
 import school.sptech.wmw_projeto_pi.dto.dashboard.MovimentacaoSemanalDto;
 import school.sptech.wmw_projeto_pi.dto.dashboard.PerdasQuebrasDto;
 import school.sptech.wmw_projeto_pi.dto.dashboard.ResumoMovimentacaoDto;

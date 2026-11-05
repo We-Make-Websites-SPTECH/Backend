@@ -134,12 +134,16 @@ public class LancamentoManualService {
 
             if (total.getInsumoId() > consumo.getInsumoId()) {
                 ConsumoTotalResponseDto novoTotal = new ConsumoTotalResponseDto(consumo.getInsumoId(), consumo.getPrevisto());
+                novoTotal.setNome(consumo.getNome());
+                novoTotal.setUnidadeMedida(consumo.getUnidadeMedida());
                 consumoAgregado.add(posicao, novoTotal);
                 return;
             }
         }
 
         ConsumoTotalResponseDto novoTotal = new ConsumoTotalResponseDto(consumo.getInsumoId(), consumo.getPrevisto());
+        novoTotal.setNome(consumo.getNome());
+        novoTotal.setUnidadeMedida(consumo.getUnidadeMedida());
         consumoAgregado.add(novoTotal);
     }
 }

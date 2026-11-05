@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import school.sptech.wmw_projeto_pi.dto.importacao.ComponenteConsumoDto;
+import school.sptech.wmw_projeto_pi.dto.interno.ComponenteConsumoDto;
 import school.sptech.wmw_projeto_pi.dto.importacao.ConsumoPersonalizacaoRequestDto;
 import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoConfirmacaoRequestDto;
 import school.sptech.wmw_projeto_pi.dto.importacao.ImportacaoLinhaResponseDto;

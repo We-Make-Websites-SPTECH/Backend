@@ -1,11 +1,17 @@
 package school.sptech.wmw_projeto_pi.dto.importacao;
 
+import school.sptech.wmw_projeto_pi.enums.UnidadeMedidaEnum;
+
 import java.math.BigDecimal;
 
 public class ConsumoInsumoResponseDto {
     private Long id;
 
     private Integer insumoId;
+
+    private String nome;
+
+    private UnidadeMedidaEnum unidadeMedida;
 
     private BigDecimal previsto;
 
@@ -43,6 +49,22 @@ public class ConsumoInsumoResponseDto {
 
     public void setInsumoId(Integer insumoId) {
         this.insumoId = insumoId;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public UnidadeMedidaEnum getUnidadeMedida() {
+        return unidadeMedida;
+    }
+
+    public void setUnidadeMedida(UnidadeMedidaEnum unidadeMedida) {
+        this.unidadeMedida = unidadeMedida;
     }
 
     public BigDecimal getPrevisto() {
