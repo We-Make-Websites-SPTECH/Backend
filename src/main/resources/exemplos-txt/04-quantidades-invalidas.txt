@@ -1,0 +1,6 @@
+ID;NOME;QUANTIDADE
+1;Pizza Calabresa;0
+2;Pizza Mussarela;-1
+3;Pizza Portuguesa;1.5
+4;Pizza Frango com Catupiry;duas
+5;Pizza Margherita;
