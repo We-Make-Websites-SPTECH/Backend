@@ -257,7 +257,7 @@ public class EstoqueService {
         return usuario.get();
     }
 
-    private BigDecimal calcularQuantidadeLiquida(BigDecimal quantidadeBruta, Integer percentualPerda) {
+    static BigDecimal calcularQuantidadeLiquida(BigDecimal quantidadeBruta, Integer percentualPerda) {
         Integer percentualAproveitado = 100 - percentualPerda;
         BigDecimal quantidadeAproveitada = quantidadeBruta.multiply(BigDecimal.valueOf(percentualAproveitado));
 
